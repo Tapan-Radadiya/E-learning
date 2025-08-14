@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/middleware/auth.middleware.ts","./src/middleware/authorize.middleware.ts","./src/middleware/index.ts","./src/types/express.d.ts","./src/utils/comman.ts"],"version":"5.8.3"}

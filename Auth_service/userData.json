@@ -1,0 +1,63 @@
+[
+    {
+        "display_name": "LiamMorgan",
+        "email": "liam.morgan@gmail.com",
+        "password": "Liam@2025!"
+    },
+    {
+        "display_name": "AvaReynolds",
+        "email": "ava.reynolds@outlook.com",
+        "password": "Ava#Secure1"
+    },
+    {
+        "display_name": "NoahBennett",
+        "email": "noah.bennett@yahoo.com",
+        "password": "N0ah!Pass23"
+    },
+    {
+        "display_name": "IsabellaFord",
+        "email": "isabella.ford@live.com",
+        "password": "Isa@F0rd99"
+    },
+    {
+        "display_name": "EthanWalker",
+        "email": "ethan.walker@mail.com",
+        "password": "Ethan#2025"
+    },
+    {
+        "display_name": "MiaHarrison",
+        "email": "mia.harrison@gmail.com",
+        "password": "Mia!Pass777"
+    },
+    {
+        "display_name": "JamesParker",
+        "email": "james.parker@outlook.com",
+        "password": "James@321!"
+    },
+    {
+        "display_name": "CharlotteBrooks",
+        "email": "charlotte.brooks@yahoo.com",
+        "password": "Char#2024!"
+    },
+    {
+        "display_name": "BenjaminCruz",
+        "email": "benjamin.cruz@gmail.com",
+        "password": "BenCruz!88"
+    },
+    {
+        "display_name": "AmeliaRussell",
+        "email": "amelia.russell@mail.com",
+        "password": "Amelia@1001"
+    },
+    {
+        "display_name": "SophiaNguyen",
+        "email": "sophia.nguyen@yahoo.com",
+        "password": "S0phia*Secure"
+    },
+    {
+        "display_name": "JohnDoe",
+        "email": "john.doe@example.com",
+        "password": "Admin@123",
+        "user_role": "ADMIN"
+    }
+]

@@ -1,0 +1,19 @@
+# Tell Node to skip TLS verification
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+
+# Set insecure registry (to avoid certificate chain issues)
+npm config set registry http://registry.npmjs.org/
+pnpm config set registry http://registry.npmjs.org/
+
+# Relax SSL checks
+npm config set strict-ssl false
+pnpm config set strict-ssl false
+
+
+
+
+npm config delete registry
+npm config delete strict-ssl
+pnpm config delete registry
+pnpm config delete strict-ssl
+unset NODE_TLS_REJECT_UNAUTHORIZED

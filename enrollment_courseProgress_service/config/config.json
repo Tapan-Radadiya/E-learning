@@ -1,0 +1,24 @@
+{
+  "development": {
+    "username": "FridayDB",
+    "password": "FridayDB",
+    "database": "friday_db",
+    "host": "localhost",
+    "port":5435,
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "FridayDB",
+    "password": "FridayDB",
+    "database": "friday_db",
+    "host": "localhost",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "FridayDB",
+    "password": "FridayDB",
+    "database": "friday_db",
+    "host": "localhost",
+    "dialect": "postgres"
+  }
+}

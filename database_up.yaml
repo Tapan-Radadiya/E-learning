@@ -1,0 +1,82 @@
+version: "3.8"
+
+services:
+  JarvisDB:
+    image: postgres:alpine
+    container_name: JarvisDB
+    environment:
+      POSTGRES_USER: JarvisDB
+      POSTGRES_PASSWORD: JarvisDB
+      POSTGRES_DB: jarvis_db
+    volumes:
+      - jarvis_pg_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - e_learning_database_network
+
+  VisionDB:
+    image: postgres:alpine
+    container_name: VisionDB
+    environment:
+      POSTGRES_USER: VisionDB
+      POSTGRES_PASSWORD: VisionDB
+      POSTGRES_DB: vision_db
+    volumes:
+      - vision_pg_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - e_learning_database_network
+
+  FridayDB:
+    image: postgres:alpine
+    container_name: FridayDB
+    environment:
+      POSTGRES_USER: FridayDB
+      POSTGRES_PASSWORD: FridayDB
+      POSTGRES_DB: friday_db
+    volumes:
+      - friday_pg_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    networks:
+      - e_learning_database_network
+  
+  PheonixDb:
+    image: postgres:alpine
+    container_name: PheonixDB
+    environment:
+      POSTGRES_USER: PheonixDB
+      POSTGRES_PASSWORD: PheonixDB
+      POSTRES_DB: pheonix_db
+    volumes:
+      - pheonix_pg_data:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"
+    networks:
+      - e_learning_database_network
+
+  QuickSilverDB:
+    image: postgres:alpine
+    container_name: QuickSilverDB
+    environment:
+      POSTGRES_USER: QuickSilverDB
+      POSTGRES_PASSWORD: QuickSilverDB
+      POSTGRES_DB: quick_silver_db
+    volumes:
+      - quick_silver_pg_data:/var/lib/postgresql/data
+    ports:
+      - "5437:5432"
+    networks:
+      - e_learning_database_network
+        
+volumes:
+  jarvis_pg_data:
+  vision_pg_data:
+  friday_pg_data:
+  pheonix_pg_data:
+  quick_silver_pg_data:
+
+networks:
+  e_learning_database_network:

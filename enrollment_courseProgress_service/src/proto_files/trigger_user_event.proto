@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package TriggerXPEvent;
+
+option go_package = "progression_service/gRPC/protoFile;pb";
+
+service UserXpEventTriggerService {
+  rpc TriggerUserXPEvent(XpEventRequest) returns (XpEventResponse);
+  rpc GetUserXp(FetchXpDataRequest) returns (FetchXpDataResponse);
+  rpc GetEventXpPoints(FetchEventXpPointsRequest) returns(FetchEventXpPointsResponse);
+}
+
+
+message FetchEventXpPointsRequest{
+  string xpEvent = 1;
+}
+
+message FetchEventXpPointsResponse{
+  string xpEvent = 1;
+  int32  xpPoints = 2;
+}
+
+message FetchXpDataRequest{
+  string userId = 1;
+}
+
+message FetchXpDataResponse{
+  int32 xp_point = 1;
+  string userId = 2;
+}
+
+message XpEventRequest {
+  string userId = 1;
+  string xpEvent = 2;
+}
+
+message XpEventResponse {
+  int32 xp_point = 1;
+  string userId = 2;
+}

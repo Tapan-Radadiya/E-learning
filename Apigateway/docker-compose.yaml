@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-gateway-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - "./nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro"
+      - "./conf.d:/etc/nginx/conf.d:ro"
+      - "./jwt-auth.lua:/etc/nginx/lua/jwt-auth.lua:ro"
+      - "./nginx/logs:/var/log/nginx"
+    command: openresty -g 'daemon off;'
+
+    networks:
+      - hostnet
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  
+
+networks:
+  hostnet:
+    driver: bridge
