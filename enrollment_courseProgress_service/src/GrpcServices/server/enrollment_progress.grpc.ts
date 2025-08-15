@@ -4,7 +4,6 @@ import * as grpc from "@grpc/grpc-js"
 import { getCourseProgressData } from "../../services/course_progress.service"
 const COURSEPROTOPATH = path.join(__dirname, '../../proto_files/course_progress.proto')
 
-
 const enrollmentPackagedDefination = protoLoader.loadSync(COURSEPROTOPATH, {
     keepCase: true,         // <- This keeps `course_id` as it is
     longs: String,
@@ -21,9 +20,9 @@ const enrollmentServiceImpl = {
         call: grpc.ServerUnaryCall<any, any>,
         callback: grpc.sendUnaryData<any>
     ) => {
+        console.log('courseId-->', call.request);
         const courseId = call.request.courseId
         const userId = call.request.userId
-        console.log('courseId-->', courseId);
         if (!courseId || !userId) {
             callback({
                 code: grpc.status.INVALID_ARGUMENT,

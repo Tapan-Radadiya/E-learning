@@ -94,7 +94,6 @@ func (grpcC *CourseProgressClient) GetCourseProgress(courseId uuid.UUID, userId 
 	fmt.Printf("Course Id %v", courseId)
 	fmt.Printf("Course Id %v", userId)
 	req := &CourseProgress.CourseProgressRequest{UserId: userId.String(), CourseId: courseId.String()}
-
 	res, err := grpcC.client.GetCourseProgress(ctx, req)
 	if err != nil {
 		fmt.Printf("(gRPC) Eroor Fetching Course Progress Data %v", err)
