@@ -15,12 +15,12 @@ const AddCourseModuleService = async (req: Request): Promise<ApiResultInterface>
     if (!isValid) {
         return ApiResult({ message: "Invalid Data", data: isValid, statusCode: 400 })
     }
-    console.log('fields->',fields)
     const course_moduleData = await course_modules.create({
         course_id: courseId,
         video_url: files[0],
         title: fields.title,
-        description: fields.description
+        description: fields.description,
+        completion_percentage: fields.completion_percentage
     })
     if (course_moduleData) {
         return ApiResult({ statusCode: 201, message: "Module Created Successfully" })

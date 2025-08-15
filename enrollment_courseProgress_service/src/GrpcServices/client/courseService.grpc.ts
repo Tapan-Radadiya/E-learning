@@ -92,7 +92,6 @@ const getUsersDataGRPCService = async (userId: string[]): Promise<UserGrpcDetail
                 console.log('err->', err)
                 reject()
             }
-            console.log('response->', response)
             resolve(response)
         })
     })
@@ -117,18 +116,21 @@ const getCourseModuleGRPCService = async (moduleId: string) => {
     return data
 }
 
-const triggerUserXpEvent = async (xpEventData: { userId: string, xpEvent: string }) => {
-    const data = await new Promise((res, rej) => {
+const triggerUserXpEvent = async (xpEventData: { userId: string, xpEvent: string }): Promise<{ userId: string, xp_point: number } | null> => {
+    const data: { userId: string, xp_point: number } | null = await new Promise((res, rej) => {
         triggerXpClient.TriggerUserXPEvent(xpEventData, (err: any, response: any) => {
             if (err) {
                 console.log('err->', err)
-                rej()
+                rej(`${err.message} | User Enrolled Successfully`)
             }
             res(response)
         })
     })
-    // console.log('data->',data)
-    return data
+    if (data && data.userId)
+        return data
+    else {
+        return data
+    }
 }
 
 const fetchUserXp = async (userId: string): Promise<{ xp_point: number, userId: string } | null> => {

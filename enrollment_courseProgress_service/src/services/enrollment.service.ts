@@ -32,17 +32,16 @@ const enrollUserService = async (courseData: CourseDataInterface, user_id: strin
         const userXpData = await fetchUserXp(user_id)
         // Grpc Call
         if (IS_FIRST_ENROLLMENT) {
-            await triggerUserXpEvent({ userId: user_id, xpEvent: 'FIRST_ENROLL' })
+            const data = await triggerUserXpEvent({ userId: user_id, xpEvent: 'FIRST_ENROLL' })
             const xpEventData = await fetchXpEventData("FIRST_ENROLL")
-
             // Sending Email When User Enroll For The First Time
-            if (Array.isArray(userData) && userData?.length > 0) {
+            if (Array.isArray(userData) && userData?.length > 0 && data?.xp_point) {
                 const emailBody = FIRST_ENROLLMENT_TEMPLATE({
                     courseDescription: courseData.description,
                     courseTitle: courseData.title,
                     gainedXp: xpEventData?.xpPoints ?? 0,
                     thumbnailUrl: `${process.env.AWS_CLOUD_FRONT_URL}${courseData.thumbnail_url}`,
-                    totalXp: userXpData?.xp_point ?? 0,
+                    totalXp: data?.xp_point,
                     userDisplayName: userData[0].display_name
                 })
 

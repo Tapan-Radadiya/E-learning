@@ -23,7 +23,6 @@ func (q *QuizController) AddQuiz(c *fiber.Ctx) error {
 	if err := c.BodyParser(&quizData); err != nil {
 		return common.Response(c, fiber.StatusConflict, fiber.Map{"message": "Missing Data"})
 	}
-
 	data, err := q.QuizService.AddQuizService(&quizData)
 
 	if err != nil {

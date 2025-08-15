@@ -7,7 +7,7 @@ import (
 )
 
 type QuizAttempts struct {
-	ID        uuid.UUID `json:"id" gorm:"type:uuid;default:uuid_generate_v4();primaryKey:column:id"`
+	ID        uuid.UUID `json:"id" gorm:"type:uuid;primaryKey:column:id"`
 	UserId    uuid.UUID `json:"userid" gorm:"type:uuid;column:userid"`
 	QuizId    uuid.UUID `json:"quizid" gorm:"type:uuid;column:quizid"`
 	Quiz      Quizes    `json:"quiz" gorm:"foreignKey:QuizId"`

@@ -100,7 +100,6 @@ const getUserProfilesGrpcService = async (userId: string[]): Promise<ApiResultIn
             attributes: ['id', 'display_name', 'email', 'user_role'],
             raw: true
         })
-        console.log('getUserData-->', getUserData);
         return ApiResult({ message: "Data Fetched", statusCode: 200, data: getUserData })
     } catch (error) {
         return ApiResult({ message: "Internal Server Error", statusCode: 500 })

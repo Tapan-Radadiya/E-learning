@@ -23,7 +23,7 @@ const enrollmentServiceImpl = {
     ) => {
         const courseId = call.request.courseId
         const userId = call.request.userId
-
+        console.log('courseId-->', courseId);
         if (!courseId || !userId) {
             callback({
                 code: grpc.status.INVALID_ARGUMENT,

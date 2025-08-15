@@ -3,8 +3,6 @@ import { ApiResult } from "../utils/comman"
 import { AddCourseModuleService, getAllCourseModuleService, getModuleDetailsService, removeCourseModuleService, updateCourseModuleService } from "../services/course_module.service"
 
 const AddCourseModule = async (req: Request, res: Response) => {
-    console.log('data->',req.headers['x-user-id'])
-    return
     try {
         const data = await AddCourseModuleService(req)
         res.status(data.statusCode!).json(data)

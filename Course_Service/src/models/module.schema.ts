@@ -29,6 +29,10 @@ export const course_modules = db.define('course_modules', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    completion_percentage: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
     createdAt: {
         type: DataTypes.TIME,
         allowNull: false,

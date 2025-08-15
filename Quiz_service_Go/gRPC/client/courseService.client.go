@@ -74,7 +74,7 @@ func NewUserServiceGrpcClient(port string) error {
 }
 
 func (grpcClient *CourseServiceClient) GetCourseDetails(courseId string) (*CourseDetails.CourseDetails, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 	defer cancel()
 
@@ -89,14 +89,15 @@ func (grpcClient *CourseServiceClient) GetCourseDetails(courseId string) (*Cours
 }
 
 func (grpcC *CourseProgressClient) GetCourseProgress(courseId uuid.UUID, userId uuid.UUID) (*CourseProgress.CourseProgression, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
+	fmt.Printf("Course Id %v", courseId)
+	fmt.Printf("Course Id %v", userId)
 	req := &CourseProgress.CourseProgressRequest{UserId: userId.String(), CourseId: courseId.String()}
 
 	res, err := grpcC.client.GetCourseProgress(ctx, req)
 	if err != nil {
-		log.Fatal("(gRPC) Eroor Fetching Course Progress Data")
+		fmt.Printf("(gRPC) Eroor Fetching Course Progress Data %v", err)
 		return nil, err
 	}
 	return res.CourseProgressData, nil
@@ -110,7 +111,7 @@ func (grpcU *UserServiceClient) GetUserDetails(userId string) (*user.GetUserDeta
 
 	res, err := grpcU.client.GetUsersProfile(ctx, req)
 	if err != nil {
-		log.Fatal("(gRPC) Eroor Fetching Course Progress Data")
+		log.Fatal("(gRPC) Eroor Fetching User Details")
 		return nil, err
 	}
 	fmt.Printf("Data %v", res)
