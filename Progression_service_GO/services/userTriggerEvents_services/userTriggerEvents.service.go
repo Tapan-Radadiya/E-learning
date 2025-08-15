@@ -59,16 +59,9 @@ func (ute *UserTriggerEventService) UserXpTriggerService(userXpTriggerData *mode
 	if err := config.DB.Model(&userXpData).Updates(userXpData).Error; err != nil {
 		return nil, err
 	}
-
-	// Send SSE event
-	leaderBoardData, err := ute.GetLeaderBoardService()
-	if err != nil {
-		fmt.Println("Error Updating New Leaderboard", err)
-	}
-	curLeaderboardData := common.GetJsonMarshalData(leaderBoardData)
-
-	ssehub.Hub.Notifier <- curLeaderboardData
+	go ute.BroadCastLeaderboardUpdate()
 	return &userXpData, nil
+
 }
 
 func (ute *UserTriggerEventService) GetUserXpService(userId uuid.UUID) (*model.UserXp, error) {
@@ -119,4 +112,17 @@ func (ute *UserTriggerEventService) GetLeaderBoardService() ([]UserXpLeaderBoard
 	}
 
 	return userLeaderBoardData, nil
+}
+
+func (ute *UserTriggerEventService) BroadCastLeaderboardUpdate() {
+
+	fmt.Println("He Leaved Me Alone")
+	// Send SSE event
+	leaderBoardData, err := ute.GetLeaderBoardService()
+	if err != nil {
+		fmt.Println("Error Updating New Leaderboard", err)
+	}
+	curLeaderboardData := common.GetJsonMarshalData(leaderBoardData)
+
+	ssehub.Hub.Notifier <- curLeaderboardData
 }

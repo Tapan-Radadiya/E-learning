@@ -2,6 +2,7 @@ package grpcServer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -62,7 +63,7 @@ func (gs *GrpcServer) TriggerUserXPEvent(ctx context.Context, in *pb.XpEventRequ
 	data, err := service.UserXpTriggerService(userXpData)
 
 	if err != nil {
-		fmt.Println("Error Triggering UserXp (gRPC)")
+		return nil, errors.New("error triggering xpevent")
 	}
 	returnData := &pb.XpEventResponse{
 		XpPoint: int32(data.XPPoints),

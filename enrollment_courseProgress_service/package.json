@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --exec ts-node --skip-ignore src/index.ts",
+    "dev": "nodemon --exec ts-node src/index.ts",
     "db:migrate": "npx sequelize-cli db:migrate"
   },
   "author": "",
@@ -20,7 +20,7 @@
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.7",
-    "shared-middleware": "file:../shared-package"
+    "shared-middleware": "workspace:*"
   },
   "devDependencies": {
     "grpc-tools": "^1.13.0",

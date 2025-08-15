@@ -1,0 +1,5 @@
+packages:
+  - "Auth_service"
+  - "Course_Service"
+  - "enrollment_courseProgress_service"
+  - "shared-middleware"

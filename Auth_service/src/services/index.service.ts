@@ -20,8 +20,8 @@ const addUserService = async (userBody: { display_name: string, email: string, p
         user_role: userBody.role
     }, { raw: true })
     if (userCreate) {
-        const data:any = await triggerUserXpEvent({ xpEvent: "NEW_REGISTER", userId: userCreate.toJSON().id })
-        if(data){
+        const data: any = await triggerUserXpEvent({ xpEvent: "NEW_REGISTER", userId: userCreate.toJSON().id })
+        if (data) {
             await pushDataToSQS({
                 to: userBody.email,
                 body: NEW_USER_EMAIL_TEMPLATE(userBody.display_name, data.xp_point as number),
@@ -48,7 +48,6 @@ const loginUserService = async (userLoginBody: { email: string, password: string
         user_id: validateLogin.id,
         refresh_token: refreshToken
     }, {})
-
     return ApiResult({ message: "User Logged In Successfully", statusCode: 200, data: { accessToken, refreshToken } })
 }
 
@@ -101,6 +100,7 @@ const getUserProfilesGrpcService = async (userId: string[]): Promise<ApiResultIn
             attributes: ['id', 'display_name', 'email', 'user_role'],
             raw: true
         })
+        console.log('getUserData-->', getUserData);
         return ApiResult({ message: "Data Fetched", statusCode: 200, data: getUserData })
     } catch (error) {
         return ApiResult({ message: "Internal Server Error", statusCode: 500 })

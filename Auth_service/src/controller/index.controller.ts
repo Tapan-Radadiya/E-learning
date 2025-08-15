@@ -14,11 +14,11 @@ const createUserController = async (req: Request, res: Response) => {
     }
     try {
         const data = await addUserService(req.body)
-        if(data.statusCode === 201){
+        if (data.statusCode === 201) {
             res.status(201).json(ApiResult({ message: "User Created Successfully", data }))
             return
-        }else{
-            res.status(409).json(ApiResult({message:data.message}))
+        } else {
+            res.status(409).json(ApiResult({ message: data.message }))
         }
     } catch (error) {
         console.log('erroor->', error)
@@ -40,11 +40,15 @@ const loginUser = async (req: Request, res: Response) => {
 
     try {
         const data = await loginUserService(req.body)
-        const { refreshToken, accessToken } = data.data
-        res.cookie('jwt', refreshToken, {
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000
-        }).status(data.statusCode!).json(ApiResult({ message: data.message, data: accessToken }))
+        if (data.statusCode === 200) {
+            const { refreshToken, accessToken } = data.data
+            res.cookie('jwt', refreshToken, {
+                httpOnly: true,
+                maxAge: 24 * 60 * 60 * 1000
+            }).status(data.statusCode!).json(ApiResult({ message: data.message, data: accessToken }))
+        } else {
+            res.status(data.statusCode!).json(ApiResult({ message: data.message }))
+        }
         return
     } catch (error) {
         console.log('error->', error)

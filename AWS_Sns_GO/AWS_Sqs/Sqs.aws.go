@@ -16,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/google/uuid"
 	"gopkg.in/gomail.v2"
 )
 

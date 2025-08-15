@@ -33,7 +33,7 @@ func NewGrpcClient(addr string) error {
 
 func (grpcClient *UserGrpcClient) GetUsersProfile(userIds []string) ([]*user.UserProfile, error) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	req := &user.GetUserDetailsRequest{UserId: userIds}
 

@@ -22,6 +22,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    queryInterface.removeColumn('user_refresh_tokens', 'user_refresh_tokens_user_id_unique')
+    await queryInterface.removeColumn('user_refresh_tokens', 'user_refresh_tokens_user_id_unique')
+    await queryInterface.removeConstraint('user_refresh_tokens', 'user_refresh_tokens_user_id_unique')
   }
 };

@@ -1,0 +1,12 @@
+{
+    "private": true,
+    "workspaces": [
+        "Auth_service",
+        "Course_Service",
+        "enrollment_courseProgress_service",
+        "shared-middleware"
+    ],
+    "devDependencies": {
+        "sequelize-cli": "^6.6.3"
+    }
+}

@@ -24,8 +24,7 @@ const triggerUserXpEvent = async (xpEventData: { userId: string, xpEvent: string
     const data = await new Promise((res, rej) => {
         triggerXpEventClient.TriggerUserXPEvent(xpEventData, (err: any, response: any) => {
             if (err) {
-                console.log('err->', err)
-                rej()
+                rej(`${err.message} | User Created Successfully`)
             }
             res(response)
         })

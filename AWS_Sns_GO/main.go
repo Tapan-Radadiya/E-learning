@@ -2,6 +2,7 @@ package main
 
 import (
 	awssqs "AWS_Sns_Go/AWS_Sqs"
+	"fmt"
 	"log"
 	"time"
 
@@ -34,5 +35,5 @@ func main() {
 	go sqsCfg.ReceiveSQSMsg()
 
 	log.Fatal(app.Listen(":3005"))
-
+	fmt.Println("Server Listing On 3005 . . .")
 }
