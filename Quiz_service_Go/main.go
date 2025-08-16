@@ -33,24 +33,15 @@ func main() {
 	// Routes
 
 	// Load SQS
-	var sqsConfig utils.SQSConfig
-	sqsConfigErr := sqsConfig.LoadAWSConfig()
-	if sqsConfigErr != nil {
+
+	SqsConfigErr := utils.LoadAWSConfig()
+
+	if SqsConfigErr != nil {
 		log.Fatal("Error Loading SQS Config")
 	}
 
-	err := client.NewGrpcClient("localhost:50051")
-	if err != nil {
-		log.Fatal("Error Connecting With Grpc Client", err)
-	}
-	courseProgressGrpcErr := client.NewCourseProgressGrpcClient("localhost:50054")
-	if courseProgressGrpcErr != nil {
-		log.Fatal("Error Connecting With Grpc Client(Course Progress)", err)
-	}
+	// Initialize All Grpc Client Service Needed
+	client.InitAllGrpcClient()
 
-	userServiceGrpcErr := client.NewUserServiceGrpcClient("localhost:50052")
-	if userServiceGrpcErr != nil {
-		log.Fatal("Error Connecting With Grpc Client(UserService Progress)", err)
-	}
 	log.Fatal(app.Listen(":3004"))
 }

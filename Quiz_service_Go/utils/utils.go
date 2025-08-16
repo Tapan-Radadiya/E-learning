@@ -32,15 +32,17 @@ type SQSConfig struct {
 	SqsClient *sqs.Client
 }
 
+var GLOBAL_SQS_CLIENT SQSConfig
+
 type SQSEmailBody struct {
-	EmailBody      string
+	Body      string
 	EmailType      EmailType
-	EmailSubject   string
-	EmailReceiver  string
+	Subject   string
+	To  string
 	MessageGroupId SQS_Message_Group_Id
 }
 
-func (s *SQSConfig) LoadAWSConfig() error {
+func LoadAWSConfig() error {
 	awsRegions := os.Getenv("AWS_REGION")
 	awsAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
 	awsSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
@@ -63,9 +65,9 @@ func (s *SQSConfig) LoadAWSConfig() error {
 		return err
 	}
 
-	s.Cfg = cfg
+	GLOBAL_SQS_CLIENT.Cfg = cfg
 	// SQS Client
-	s.SqsClient = sqs.NewFromConfig(cfg)
+	GLOBAL_SQS_CLIENT.SqsClient = sqs.NewFromConfig(cfg)
 
 	return nil
 }
@@ -84,6 +86,8 @@ func (s *SQSConfig) SendSQSMsg(emailData SQSEmailBody) {
 		MessageGroupId:         aws.String("Email_Sending"),
 		MessageDeduplicationId: aws.String("dedup-" + uuid.NewString()),
 	}
+
+	// fmt.Printf("Data %+v", s.SqsClient)
 
 	_, sqsErr := s.SqsClient.SendMessage(context.TODO(), sendMessageInput)
 

@@ -9,6 +9,7 @@ import (
 	"quiz_service/config"
 	emailtemplate "quiz_service/emailTemplate"
 	"quiz_service/gRPC/client"
+	XpEvent "quiz_service/gRPC/gRPC_Code/UserXpEvents"
 	"quiz_service/model"
 	"quiz_service/utils"
 
@@ -112,7 +113,6 @@ func (q *QuizAttemptService) SubmitQuizService(quizAnswers *model.ExamQuizBody, 
 	}
 
 	marksPerQue := 100 / quizData.TotalQuestion
-	fmt.Printf("Data %+v", quizAnswers)
 	// Evaluating right answers
 	for _, val := range quizAnswers.QuizAnswer {
 		var mcqOptions *model.McqOptions
@@ -133,47 +133,100 @@ func (q *QuizAttemptService) SubmitQuizService(quizAnswers *model.ExamQuizBody, 
 		QuizAttemptId: userQuizAttempt.ID,
 	}
 
+	var isUserPassedFirstTime bool
 	if usersScore > quizData.PassingMarks {
 		usersScoreRecord.IsPassed = true
+
+		var isUserPassedAlready *model.QuizScore
+		rowsEffected := config.DB.Where("quiz_attempt_id = ?", userQuizAttempt.ID).Where("is_passed = ?", true).Limit(1).Find(&isUserPassedAlready)
+		if rowsEffected.Error != nil {
+			return nil, errors.New("error fetching old score records")
+		}
+		if rowsEffected.RowsAffected == 0 {
+			isUserPassedFirstTime = true
+		}
 		if err := config.DB.Create(&usersScoreRecord).Error; err != nil {
 			return nil, errors.New("error storing mcq marks try after sometime")
 		}
-
 	} else {
 		usersScoreRecord.IsPassed = false
 		if err := config.DB.Create(&usersScoreRecord).Error; err != nil {
 			return nil, errors.New("error storing mcq marks try after sometime")
 		}
 	}
-
+	go SendQuizResultEmail(&usersScoreRecord, quizData.CourseId.String(), userId.String(), usersScore > quizData.PassingMarks, isUserPassedFirstTime)
 	return &usersScoreRecord, nil
 }
 
-func AddSqsMsg(userScore *model.QuizScore, courseId string) {
-	courseData, err := client.GrpcClient.GetCourseDetails(courseId)
+func SendQuizResultEmail(userScore *model.QuizScore, courseId string, userId string, isUserPassed bool, isUserPassedFirstTime bool) {
 
+	var userXpDataAfterTrigger *XpEvent.XpEventResponse
+	// If User Already Completed This Quiz Then No Need To Add XP
+	if isUserPassed && isUserPassedFirstTime {
+		var err error
+		userXpDataAfterTrigger, err = client.XpEventGrpcClient.TriggerXpEvent("QUIZ_PASSED", userId)
+		if err != nil {
+			fmt.Println("Error sending xp event", err)
+		}
+	}
+
+	// If User Is Passed The Quiz For Second Time Then Fetch XpData Direct
+	var userXpData *XpEvent.FetchXpDataResponse
+	if !isUserPassedFirstTime {
+		var err error
+		userXpData, err = client.XpEventGrpcClient.GetUserXp(userId)
+		if err != nil {
+			fmt.Println("Error fetching userXp Data", err)
+		}
+	}
+
+	// Grpc Call
+	data, err := client.UserServiceGrpcClient.GetUserDetails(userId)
+	if err != nil {
+		fmt.Printf("Error Fetching User Data")
+	}
+
+	// Grpc Call
+	courseData, err := client.GrpcClient.GetCourseDetails(courseId)
 	if err != nil {
 		fmt.Println("Error Fetching Course Data Through gRPC")
 	}
 
+	// Grpc Call
+	eventXpData, err := client.XpEventGrpcClient.GetEventXpData("QUIZ_PASSED")
+	if err != nil {
+		fmt.Println("Error Fetching XpEvent Data Through gRPC")
+	}
+
+	var earnedXp int
+	var totalXp int
+	if isUserPassedFirstTime {
+		earnedXp = int(eventXpData.XpPoints)
+		totalXp = int(userXpDataAfterTrigger.XpPoint)
+	} else {
+		totalXp = int(userXpData.XpPoint)
+	}
+
 	emailTemplatebody := emailtemplate.UserPassEmailTemplateStruct{
-		UserDisplayName:   "",
+		UserDisplayName:   data.Profiles[0].DisplayName,
 		CourseTitle:       courseData.Title,
 		CourseDescription: courseData.Description,
 		ThumbnailURL:      fmt.Sprintf("%s%s", os.Getenv("AWS_CLOUD_FRONT_URL"), courseData.ThumbnailUrl),
 		QuizScore:         userScore.Score,
 		IsPassed:          userScore.IsPassed,
-		EarnedXP:          0,
-		TotalXP:           0,
+		EarnedXP:          earnedXp,
+		TotalXP:           totalXp,
 	}
-
-	var sqsSendMsg utils.SQSConfig
 
 	sqsEmailBody := &utils.SQSEmailBody{
-		EmailBody: emailtemplate.UserPassEmailTemplate(&emailTemplatebody),
+		Body:           emailtemplate.UserPassEmailTemplate(&emailTemplatebody),
+		EmailType:      "Quiz_Completed",
+		Subject:        "Quiz Completion",
+		To:             data.Profiles[0].Email,
+		MessageGroupId: "Email_Sending",
 	}
 
-	sqsSendMsg.SendSQSMsg(*sqsEmailBody)
+	utils.GLOBAL_SQS_CLIENT.SendSQSMsg(*sqsEmailBody)
 }
 
 func (q *QuizAttemptService) GetQuizResultsService() {
