@@ -13,5 +13,5 @@ func RegisterQuizAttemptRouter(app fiber.Router) {
 	quizAttemptService := quizattemptcontroller.NewQuizAttemptController(service)
 
 	app.Get("/start-quiz/:quizId", quizAttemptService.StartQuiz)
-	app.Get("/submit-quiz/:quizId", quizAttemptService.SubmitQuiz)
+	app.Post("/submit-quiz/:quizId", quizAttemptService.SubmitQuiz)
 }

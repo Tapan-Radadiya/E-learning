@@ -37,8 +37,6 @@ const courseProto = grpc.loadPackageDefinition(coursePackageDefination).Course a
 const userProto = grpc.loadPackageDefinition(userPackageDefination).User as any
 const triggerProto = grpc.loadPackageDefinition(triggerEventDefination).TriggerXPEvent as any
 
-
-
 const courseClient = new courseProto.CourseService(
     'localhost:50051',
     grpc.credentials.createInsecure()

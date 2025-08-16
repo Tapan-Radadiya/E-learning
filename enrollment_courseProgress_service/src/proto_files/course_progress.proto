@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package CourseProgress;
 
-option go_package = "Quiz_service_go/gRPC/gRPC_Code/CourseProgress;CourseProgress";
+option go_package = "Quiz_service_Go/gRPC/gRPC_Code/CourseProgress;CourseProgress";
 
 service CourseProgressService{
-    rpc GetCourseProgress (CourseProgressRequest) returns (CourseProgressResponse);
+    rpc GetCourseProgress(CourseProgressRequest) returns (CourseProgressResponse);
 }
 
 message CourseProgressRequest{

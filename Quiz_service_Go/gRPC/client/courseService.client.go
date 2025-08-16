@@ -67,8 +67,8 @@ func NewUserServiceGrpcClient(port string) error {
 		return err
 	}
 
-	c := CourseProgress.NewCourseProgressServiceClient(conn)
-	CourseProgressGrpcClient.client = c
+	c := user.NewUserServiceClient(conn)
+	UserServiceGrpcClient.client = c
 	fmt.Printf("Grpc Client Connected Successfully %v\n", port)
 	return nil
 }

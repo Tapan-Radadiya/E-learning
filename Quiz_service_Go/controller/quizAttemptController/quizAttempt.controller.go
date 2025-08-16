@@ -1,6 +1,7 @@
 package quizattemptcontroller
 
 import (
+	"fmt"
 	"quiz_service/common"
 	"quiz_service/model"
 	quizattemptservice "quiz_service/services/quizAttemptService"
@@ -56,7 +57,7 @@ func (q *QuizAttemptController) SubmitQuiz(c *fiber.Ctx) error {
 	if err := c.BodyParser(&quizResultBody); err != nil {
 		return common.Response(c, fiber.StatusConflict, fiber.Map{"message": "Error Parsing Data"})
 	}
-
+	fmt.Printf("Data %+v", quizResultBody)
 	data, err := q.QuizAttemptservice.SubmitQuizService(quizResultBody, quizId, userId)
 
 	if err != nil {

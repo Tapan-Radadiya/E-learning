@@ -49,6 +49,7 @@ const enrollmentServiceImpl = {
 }
 
 export const grpcService = new grpc.Server()
+
 export const ConnectGrpc = () => {
     grpcService.addService(enrollmentProto.CourseProgressService.service, enrollmentServiceImpl)
     grpcService.bindAsync("0.0.0.0:50054", grpc.ServerCredentials.createInsecure(), (err, _) => {

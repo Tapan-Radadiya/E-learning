@@ -84,6 +84,7 @@ func (q *QuizAttemptService) StartQuizService(quizId uuid.UUID, userId uuid.UUID
 		return nil, err
 	}
 	quizAttempt := &model.QuizAttempts{
+		ID:     uuid.New(),
 		UserId: userId,
 		QuizId: quizId,
 	}
@@ -111,7 +112,7 @@ func (q *QuizAttemptService) SubmitQuizService(quizAnswers *model.ExamQuizBody, 
 	}
 
 	marksPerQue := 100 / quizData.TotalQuestion
-
+	fmt.Printf("Data %+v", quizAnswers)
 	// Evaluating right answers
 	for _, val := range quizAnswers.QuizAnswer {
 		var mcqOptions *model.McqOptions
@@ -127,6 +128,7 @@ func (q *QuizAttemptService) SubmitQuizService(quizAnswers *model.ExamQuizBody, 
 
 	// Storing user quiz score
 	usersScoreRecord := model.QuizScore{
+		ID:            uuid.New(),
 		Score:         usersScore,
 		QuizAttemptId: userQuizAttempt.ID,
 	}

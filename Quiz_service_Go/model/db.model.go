@@ -68,7 +68,7 @@ type McqOptionsBulk struct {
 }
 
 type ExamQuizBody struct {
-	QuizAnswer []ExamQuizAnswer
+	QuizAnswer []ExamQuizAnswer `json:"quiz_answer"`
 }
 type ExamQuizAnswer struct {
 	QuestionId string `json:"questionId"`
