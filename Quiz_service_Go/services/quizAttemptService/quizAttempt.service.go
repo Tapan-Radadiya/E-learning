@@ -20,7 +20,6 @@ import (
 type QuizAttemptServiceInterface interface {
 	StartQuizService(quizId uuid.UUID, userId uuid.UUID) (*[]model.Mcqs, error)
 	SubmitQuizService(quizAnswers *model.ExamQuizBody, quizId uuid.UUID, userId uuid.UUID) (*model.QuizScore, error)
-	GetQuizResultsService()
 }
 
 type QuizAttemptService struct{}
@@ -154,6 +153,7 @@ func (q *QuizAttemptService) SubmitQuizService(quizAnswers *model.ExamQuizBody, 
 			return nil, errors.New("error storing mcq marks try after sometime")
 		}
 	}
+
 	go SendQuizResultEmail(&usersScoreRecord, quizData.CourseId.String(), userId.String(), usersScore > quizData.PassingMarks, isUserPassedFirstTime)
 	return &usersScoreRecord, nil
 }
@@ -227,8 +227,4 @@ func SendQuizResultEmail(userScore *model.QuizScore, courseId string, userId str
 	}
 
 	utils.GLOBAL_SQS_CLIENT.SendSQSMsg(*sqsEmailBody)
-}
-
-func (q *QuizAttemptService) GetQuizResultsService() {
-
 }
