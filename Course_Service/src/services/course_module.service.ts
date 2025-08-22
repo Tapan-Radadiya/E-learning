@@ -1,8 +1,13 @@
 import { Request } from "express";
-import { ApiResult, ApiResultInterface, DeleteFileFromS3, ExtractFormData, validateWithZod } from "../utils/comman";
+import { ApiResult, ApiResultInterface, ExtractFormData, formidableFieldsFormat, validateWithZod } from "../utils/comman";
 import { courses } from "../models/course.schema";
 import { course_modules } from "../models/module.schema";
 import { createCourseModuleZodValidation } from "../ZodValidation/create_module.zod";
+import formidable, { Files, Fields } from "formidable";
+import * as path from "path"
+import { TEMP_UPLOAD_PATH, UPLOAD_PATH, UPLOAD_VIDEO_TASK } from "../constants";
+import { Worker } from "worker_threads";
+import { DeleteFileFromS3 } from "../utils/awsS3.utils";
 
 const AddCourseModuleService = async (req: Request): Promise<ApiResultInterface> => {
     const { courseId } = req.params
@@ -10,18 +15,56 @@ const AddCourseModuleService = async (req: Request): Promise<ApiResultInterface>
     if (!isValidCourse) {
         return ApiResult({ statusCode: 404, message: "Course not found" })
     }
-    const { fields, files } = await ExtractFormData(req, `moduleVideo/${courseId}`)
+
+    const form = formidable({
+        allowEmptyFiles: false,
+        multiples: false,
+        uploadDir: TEMP_UPLOAD_PATH,
+        keepExtensions: true,
+    })
+
+
+    const [fieldsData, files]: [Fields, Files] = await form.parse(req)
+
+    const fields = formidableFieldsFormat(fieldsData)
+
     const isValid = validateWithZod(createCourseModuleZodValidation, fields)
-    if (!isValid) {
+
+    if (!isValid.success) {
         return ApiResult({ message: "Invalid Data", data: isValid, statusCode: 400 })
     }
+
+
     const course_moduleData = await course_modules.create({
         course_id: courseId,
-        video_url: files[0],
+        video_url: files?.video?.[0].filepath ?? '',
         title: fields.title,
         description: fields.description,
         completion_percentage: fields.completion_percentage
     })
+
+    if (Array.isArray(files.video) && files.video.length > 0) {
+        const worker = new Worker(
+            path.join(__dirname, "../worker_scripts/download_module_video.js")
+        )
+
+        const mimeType: string[] = files.video[0].mimetype?.split("/") ?? []
+        const workerFileData = {
+            oldFilePath: files.video[0].filepath,
+            newFilePath: `${UPLOAD_PATH}/${course_moduleData.getDataValue("id")}.${mimeType[mimeType?.length - 1]}`,
+            moduleId: course_moduleData.getDataValue("id"),
+            course_id: courseId,
+            mimeType: files.video[0].mimetype,
+            fileName: files.video[0].originalFilename
+        }
+
+        worker.postMessage({ task: UPLOAD_VIDEO_TASK, data: workerFileData })
+        worker.on("error", (err) => {
+            console.log('err-->', err);
+        })
+    }
+
+
     if (course_moduleData) {
         return ApiResult({ statusCode: 201, message: "Module Created Successfully" })
     }

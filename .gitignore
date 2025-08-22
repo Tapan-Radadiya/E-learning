@@ -48,3 +48,7 @@ Thumbs.db
 # ----------------------
 .vscode/
 .idea/
+
+
+uploads/
+temp_uploads/

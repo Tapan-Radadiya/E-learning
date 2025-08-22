@@ -1,7 +1,9 @@
-import { ApiResult, ApiResultInterface, DeleteFileFromS3, ExtractFormData, validateWithZod } from "../utils/comman"
+import { ApiResult, ApiResultInterface,  ExtractFormData, validateWithZod } from "../utils/comman"
+
 import { Request } from "express";
 import { createCourseZodValidation } from "../ZodValidation/create_course.zod";
 import { courses } from "../models/course.schema"
+import { DeleteFileFromS3 } from "../utils/awsS3.utils";
 
 const createCourseService = async (req: Request) => {
     const { fields, files } = await ExtractFormData(req)

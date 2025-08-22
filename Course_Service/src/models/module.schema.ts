@@ -33,6 +33,10 @@ export const course_modules = db.define('course_modules', {
         type: DataTypes.INTEGER,
         allowNull: false
     },
+    is_module_live: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
+    },
     createdAt: {
         type: DataTypes.TIME,
         allowNull: false,
