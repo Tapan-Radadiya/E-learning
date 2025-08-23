@@ -49,10 +49,10 @@ type McqOptions struct {
 	ID         uuid.UUID `json:"id" gorm:"type:uuid;default:uuid_generate_v4();primaryKey:column:id"`
 	OptionText string    `json:"option" gorm:"column:option_text"`
 	MCQId      uuid.UUID `json:"mcqid" gorm:"type:uuid;column:mcq_id"`
-	// Mcq        Mcqs      `json:"-" gorm:"foreignKey:MCQId;references:ID;constraint:OnDelete:CASCADE"`
-	IsCorrect bool      `json:"is_correct" gorm:"column:is_correct"`
-	CreatedAt time.Time `json:"createdat" gorm:"column:createdat"`
-	UpdatedAt time.Time `json:"updatedat" gorm:"autoUpdateTime:nano:column:updatedat"`
+	Mcq        Mcqs      `json:"-" gorm:"foreignKey:MCQId;references:ID;constraint:OnDelete:CASCADE"`
+	IsCorrect  bool      `json:"is_correct" gorm:"column:is_correct"`
+	CreatedAt  time.Time `json:"createdat" gorm:"column:createdat"`
+	UpdatedAt  time.Time `json:"updatedat" gorm:"autoUpdateTime:nano:column:updatedat"`
 }
 
 type McqData struct {

@@ -1,12 +1,15 @@
-import { connectDB,  db } from "./config/connectDb"
+import { connectDB, db } from "./config/connectDb"
 import app from "./app"
 import http, { Server } from "http"
 import "dotenv/config"
-import { connectGrpc,grpcServer } from "./grpcServices/server/course.grpc"
+import { detectDeletedKeys, initRedisClient } from "./config/connectRedis.config"
+import { connectGrpc, grpcServer } from "./grpcServices/server/course.grpc"
+
 const PORT = process.env.PORT || 8080
 
 async function BootStrap() {
-
+    await initRedisClient()
+    await detectDeletedKeys()
     await connectDB()
     await connectGrpc()
     const httpServer = http.createServer(app)
@@ -24,7 +27,7 @@ const shutDown = async (server: Server) => {
     server.close()
     console.log("Server Shut Down . . .")
 
-    grpcServer.tryShutdown(()=>{
+    grpcServer.tryShutdown(() => {
         console.log("Grpc Server Shut Down . . .")
     })
 

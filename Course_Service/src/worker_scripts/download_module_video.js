@@ -39,29 +39,47 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var worker_threads_1 = require("worker_threads");
 var awsS3_utils_1 = require("../utils/awsS3.utils");
 var fs = require("fs");
+var connectRedis_config_1 = require("../config/connectRedis.config");
 worker_threads_1.parentPort === null || worker_threads_1.parentPort === void 0 ? void 0 : worker_threads_1.parentPort.on("message", function (message) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, oldFilePath, newFilePath, moduleId, course_id, mimeType, fileName, readStream;
+    var redisClient, _a, oldFilePath, newFilePath, moduleId, course_id, mimeType, fileName, readStream, s3FileName, error_1;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                if (!(message.task === 'UPLOAD_VIDEO_LOCAL_AND_S3')) return [3 /*break*/, 3];
+                if (!(message.task === 'UPLOAD_VIDEO_LOCAL_AND_S3')) return [3 /*break*/, 8];
+                _b.label = 1;
+            case 1:
+                _b.trys.push([1, 7, , 8]);
+                redisClient = (0, connectRedis_config_1.getRedisClient)();
                 _a = message.data, oldFilePath = _a.oldFilePath, newFilePath = _a.newFilePath, moduleId = _a.moduleId, course_id = _a.course_id, mimeType = _a.mimeType, fileName = _a.fileName;
                 readStream = fs.createReadStream(oldFilePath);
                 return [4 /*yield*/, uploadToLocal(oldFilePath, newFilePath)];
-            case 1:
+            case 2:
                 _b.sent();
-                console.log("Uploaded To Local . . . ");
+                s3FileName = "moduleVideo/".concat(course_id, "/").concat(Date.now(), " - ").concat(fileName !== null && fileName !== void 0 ? fileName : '');
                 return [4 /*yield*/, (0, awsS3_utils_1.UploadFileToS3)({
-                        key: "moduleVideo/".concat(course_id, "/").concat(Date.now(), " - ").concat(fileName !== null && fileName !== void 0 ? fileName : ''),
+                        key: s3FileName,
                         body: readStream,
                         contentType: mimeType
                     })];
-            case 2:
+            case 3:
                 _b.sent();
-                console.log("Uploaded To S3 . . . ");
-                console.log("Both The Operation Completed Successfully");
-                _b.label = 3;
-            case 3: return [2 /*return*/];
+                return [4 /*yield*/, (redisClient === null || redisClient === void 0 ? void 0 : redisClient.hset("module-".concat(moduleId), "s3VideoUrl", s3FileName))];
+            case 4:
+                _b.sent();
+                return [4 /*yield*/, (redisClient === null || redisClient === void 0 ? void 0 : redisClient.hset("module-".concat(moduleId), "videoUploadedTime", Date.now()))];
+            case 5:
+                _b.sent();
+                return [4 /*yield*/, (redisClient === null || redisClient === void 0 ? void 0 : redisClient.hset("module-".concat(moduleId), "localVideoUrl", newFilePath))];
+            case 6:
+                _b.sent();
+                worker_threads_1.parentPort === null || worker_threads_1.parentPort === void 0 ? void 0 : worker_threads_1.parentPort.postMessage("ALL_PROCESS_COMPLETED_SUCCESSFULLY");
+                return [3 /*break*/, 8];
+            case 7:
+                error_1 = _b.sent();
+                console.log('error-->', error_1);
+                worker_threads_1.parentPort === null || worker_threads_1.parentPort === void 0 ? void 0 : worker_threads_1.parentPort.postMessage("ERROR_COMPLETING_PROCESS");
+                return [3 /*break*/, 8];
+            case 8: return [2 /*return*/];
         }
     });
 }); });
@@ -81,8 +99,17 @@ var uploadToLocal = function (oldFilePath, newFilePath) { return __awaiter(void 
                 })];
             case 1:
                 promiseRes = _a.sent();
-                console.log('promiseRes-->', promiseRes);
                 return [2 /*return*/, promiseRes];
         }
     });
 }); };
+(function () { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, (0, connectRedis_config_1.initRedisClient)()];
+            case 1:
+                _a.sent();
+                return [2 /*return*/];
+        }
+    });
+}); })();
