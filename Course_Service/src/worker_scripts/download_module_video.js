@@ -72,6 +72,7 @@ worker_threads_1.parentPort === null || worker_threads_1.parentPort === void 0 ?
                 return [4 /*yield*/, (redisClient === null || redisClient === void 0 ? void 0 : redisClient.hset("module-".concat(moduleId), "localVideoUrl", newFilePath))];
             case 6:
                 _b.sent();
+                console.log("\u2705 Worker Job Completed For Module Id ".concat(moduleId, " "));
                 worker_threads_1.parentPort === null || worker_threads_1.parentPort === void 0 ? void 0 : worker_threads_1.parentPort.postMessage("ALL_PROCESS_COMPLETED_SUCCESSFULLY");
                 return [3 /*break*/, 8];
             case 7:

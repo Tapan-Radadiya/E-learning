@@ -5,11 +5,12 @@ import { course_modules } from "../models/module.schema";
 import { createCourseModuleZodValidation } from "../ZodValidation/create_module.zod";
 import formidable, { Files, Fields } from "formidable";
 import * as path from "path"
-import { TEMP_UPLOAD_PATH, UPLOAD_PATH, UPLOAD_VIDEO_TASK, WORKER_PROCESS_MESSAGE } from "../constants";
+import { TEMP_UPLOAD_PATH } from "../constants";
 import { Worker } from "worker_threads";
 import { DeleteFileFromS3 } from "../utils/awsS3.utils";
 import { getRedisClient } from "../config/connectRedis.config";
 import getVideoDurationInSeconds from "get-video-duration";
+import { initVideoUploadWorkerProcess } from "../utils/workerProcessInit.utils";
 
 const AddCourseModuleService = async (req: Request): Promise<ApiResultInterface> => {
 
@@ -51,50 +52,13 @@ const AddCourseModuleService = async (req: Request): Promise<ApiResultInterface>
 
     moduleId = course_moduleData.getDataValue("id")
     if (Array.isArray(files.video) && files.video.length > 0) {
-        const redisClient = getRedisClient()
-
-
-        await redisClient?.hset(`module-${moduleId}`, {
-            localVideoUrl: files?.video?.[0].filepath,
-        })
-
-        console.log("Worker Process Started . . .")
-
-        const worker = new Worker(
-            path.join(__dirname, "../worker_scripts/download_module_video.js")
-        )
-
-        const mimeType: string[] = files.video[0].mimetype?.split("/") ?? []
-        const workerFileData = {
-            oldFilePath: files.video[0].filepath,
-            newFilePath: `${UPLOAD_PATH}/${moduleId}.${mimeType[mimeType?.length - 1]}`,
-            moduleId: moduleId,
-            course_id: courseId,
-            mimeType: files.video[0].mimetype,
-            fileName: files.video[0].originalFilename
-        }
-
-        worker.postMessage({ task: UPLOAD_VIDEO_TASK, data: workerFileData })
-
-        worker.on("error", (err) => {
-            console.log('err-->', err);
-        })
-
-        worker.on("message", async (message) => {
-            if (message === WORKER_PROCESS_MESSAGE.SUCCESS) {
-                console.log('WORKER_PROCESS_MESSAGE.SUCCESS-->', message);
-                const data = await redisClient?.hgetall(`module-${moduleId}`)
-                if (data) {
-                    console.log('data-->', data);
-                    const videoDuration = await getVideoDurationInSeconds(data.localVideoUrl)
-                    await redisClient?.expire(`module-${moduleId}`, videoDuration.toFixed())
-                    await redisClient?.hset(`module-ref:${moduleId}`, { s3VideoUrl: data.s3VideoUrl, localVideoUrl: data.localVideoUrl })
-                    course_moduleData.update({ video_url: data.localVideoUrl })
-                }
-            }
+        // Adding Data In Worker Process
+        await initVideoUploadWorkerProcess({
+            courseId,
+            moduleId,
+            files
         })
     }
-
 
     if (course_moduleData) {
         return ApiResult({ statusCode: 201, message: "Module Created Successfully" })

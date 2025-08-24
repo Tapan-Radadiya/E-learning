@@ -65,8 +65,7 @@ const courseProgressService = async (moduleId: string, userId: string): Promise<
 }
 
 const getCourseProgressData = async (courseId: string, userId: string): Promise<ApiResultInterface> => {
-    console.log('courseId-->', courseId);
-    console.log(' userId-->', userId);
+
     const userData = await course_progresses.findOne({
         where: {
             user_id: userId, course_id: courseId

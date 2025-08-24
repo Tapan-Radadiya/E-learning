@@ -55,7 +55,6 @@ var initRedisClient = function () { return __awaiter(void 0, void 0, void 0, fun
 }); };
 exports.initRedisClient = initRedisClient;
 var getRedisClient = function () {
-    console.log("Redis Client");
     if (!redisClient) {
         return null;
     }

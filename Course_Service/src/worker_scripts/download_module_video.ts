@@ -24,6 +24,7 @@ parentPort?.on("message", async (message) => {
             await redisClient?.hset(`module-${moduleId}`, "s3VideoUrl", s3FileName)
             await redisClient?.hset(`module-${moduleId}`, "videoUploadedTime", Date.now())
             await redisClient?.hset(`module-${moduleId}`, "localVideoUrl", newFilePath)
+            console.log(`✅ Worker Job Completed For Module Id ${moduleId} `)
             parentPort?.postMessage("ALL_PROCESS_COMPLETED_SUCCESSFULLY")
 
         } catch (error) {

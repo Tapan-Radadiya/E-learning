@@ -19,7 +19,6 @@ export const initRedisClient = async () => {
 
 
 export const getRedisClient = () => {
-    console.log("Redis Client")
     if (!redisClient) {
         return null
     }

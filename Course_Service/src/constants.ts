@@ -4,7 +4,7 @@ export enum Role {
     USER = "USER"
 }
 
-export const UPLOAD_PATH = path.join(__dirname, "uploads")
+export const UPLOAD_PATH = path.join(__dirname, "../../uploads")
 
 // For Windows
 export const TEMP_UPLOAD_PATH = path.join(__dirname, "temp_uploads")
