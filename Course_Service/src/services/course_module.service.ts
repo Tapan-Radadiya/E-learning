@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { ApiResult, ApiResultInterface, ExtractFormData, formidableFieldsFormat, validateWithZod } from "../utils/comman";
+import { ApiResult, ApiResultInterface, ExtractFormData, formidableFieldsFormat, getFileSize, validateWithZod } from "../utils/comman";
 import { courses } from "../models/course.schema";
 import { course_modules } from "../models/module.schema";
 import { createCourseModuleZodValidation } from "../ZodValidation/create_module.zod";
@@ -11,6 +11,8 @@ import { DeleteFileFromS3 } from "../utils/awsS3.utils";
 import { getRedisClient } from "../config/connectRedis.config";
 import getVideoDurationInSeconds from "get-video-duration";
 import { initVideoUploadWorkerProcess } from "../utils/workerProcessInit.utils";
+
+
 
 const AddCourseModuleService = async (req: Request): Promise<ApiResultInterface> => {
 
@@ -130,16 +132,35 @@ const getModuleDetailsService = async (moduleId: string): Promise<ApiResultInter
     try {
         const moduleDetails = await course_modules.findOne({
             where: { id: moduleId },
-            attributes: ['id', 'title', 'description', 'completion_percentage', 'course_id'],
+            attributes: ['id', 'title', 'description', 'completion_percentage', 'course_id', 'video_url', 'is_module_live'],
             raw: true
         })
         if (moduleDetails) {
+            
+            // if (moduleDetails.getDataValue("is_module_live")) {
+            //     const range = initRange
+            //     const fileData = await getFileSize(moduleDetails.getDataValue("video_url"))
+            //     if (!fileData) {
+            //         return ApiResult({ statusCode: 409, message: "Error Starting Video Stream" })
+            //     } else {
+
+            //     }
+            // } else {
+            
             return ApiResult({ statusCode: 200, message: "Data Fetched", data: moduleDetails })
+            // }
         } else {
             return ApiResult({ statusCode: 409, message: "Error Fetching Data" })
         }
     } catch (error) {
+        console.log('error-->', error);
         return ApiResult({ statusCode: 500, message: "Internal Server Error" })
     }
 }
-export { AddCourseModuleService, removeCourseModuleService, getAllCourseModuleService, updateCourseModuleService, getModuleDetailsService }
+export {
+    AddCourseModuleService,
+    removeCourseModuleService,
+    getAllCourseModuleService,
+    updateCourseModuleService,
+    getModuleDetailsService
+}

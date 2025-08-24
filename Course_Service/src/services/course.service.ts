@@ -1,4 +1,4 @@
-import { ApiResult, ApiResultInterface,  ExtractFormData, validateWithZod } from "../utils/comman"
+import { ApiResult, ApiResultInterface, ExtractFormData, validateWithZod } from "../utils/comman"
 
 import { Request } from "express";
 import { createCourseZodValidation } from "../ZodValidation/create_course.zod";
@@ -34,6 +34,9 @@ const getCourseDetails = async (courseId: string): Promise<ApiResultInterface> =
         course = await courses.findAll({})
     } else {
         course = await courses.findOne({ where: { id: courseId }, raw: true })
+        if (!course) {
+            return ApiResult({ message: "No Course Found", statusCode: 404 })
+        }
     }
     return ApiResult({ message: "Data Fetched", data: course, statusCode: 200 })
 }

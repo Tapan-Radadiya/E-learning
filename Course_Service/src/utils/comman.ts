@@ -1,7 +1,7 @@
 import busboy from "busboy";
 import { Request } from "express";
 import { UploadFileToS3 } from "./awsS3.utils";
-
+import * as fs from "fs"
 export interface ApiResultInterface {
     message: string,
     statusCode?: number,
@@ -17,8 +17,6 @@ export const ApiResult = (data: ApiResultInterface) => {
         err: data.err
     }
 }
-
-
 
 export async function ExtractFormData(req: Request, dataStoragePath?: string): Promise<{ fields: Record<string, any>, files: any[] }> {
     const busBoy = busboy({ headers: req.headers })
@@ -80,7 +78,16 @@ export const formidableFieldsFormat = (fields: any): Record<string, any> => {
     return output
 }
 
-
-export const downloadMedia = () => {
-
+export const getFileSize = async (filePath: string): Promise<fs.Stats | null> => {
+    console.log('filePath-->', filePath);
+    const data: fs.Stats | null = await new Promise((res, rej) => {
+        fs.stat(filePath, (err, stat) => {
+            if (err) {
+                rej(null)
+            } else {
+                res(stat)
+            }
+        })
+    })
+    return data
 }

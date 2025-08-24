@@ -10,6 +10,9 @@
         "sequelize-cli": "^6.6.3"
     },
     "dependencies": {
-        "ioredis": "^5.7.0"
+        "@types/cors": "^2.8.19",
+        "cors": "^2.8.5",
+        "ioredis": "^5.7.0",
+        "uuid": "^11.1.0"
     }
 }
