@@ -72,11 +72,11 @@ var detectDeletedKeys = function () { return __awaiter(void 0, void 0, void 0, f
             return [2 /*return*/];
         }
         sub.on("pmessage", function (pattern, channel, message) { return __awaiter(void 0, void 0, void 0, function () {
-            var moduleId, s3UrlData, localVideoUrl, updateData;
+            var moduleId, s3UrlData, localVideoUrl, localSegmentVideoUrl, updateData;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (!message.startsWith("module-")) return [3 /*break*/, 5];
+                        if (!message.startsWith("module-")) return [3 /*break*/, 6];
                         moduleId = message.replace("module-", "");
                         return [4 /*yield*/, redisClient.hget("module-ref:".concat(moduleId), "s3VideoUrl")];
                     case 1:
@@ -84,11 +84,15 @@ var detectDeletedKeys = function () { return __awaiter(void 0, void 0, void 0, f
                         return [4 /*yield*/, redisClient.hget("module-ref:".concat(moduleId), "localVideoUrl")];
                     case 2:
                         localVideoUrl = _a.sent();
+                        return [4 /*yield*/, redisClient.hget("module-ref:".concat(moduleId), "localSegmentDataurl")];
+                    case 3:
+                        localSegmentVideoUrl = _a.sent();
+                        console.log('localSegmentVideoUrl-->', localSegmentVideoUrl);
                         return [4 /*yield*/, module_schema_1.course_modules.update({
                                 is_module_live: false,
                                 video_url: s3UrlData
                             }, { where: { id: moduleId } })];
-                    case 3:
+                    case 4:
                         updateData = _a.sent();
                         if (localVideoUrl) {
                             fs.unlink(localVideoUrl, function (err) {
@@ -97,11 +101,18 @@ var detectDeletedKeys = function () { return __awaiter(void 0, void 0, void 0, f
                                 }
                             });
                         }
+                        if (localSegmentVideoUrl) {
+                            fs.unlink(localSegmentVideoUrl, function (err) {
+                                if (err) {
+                                    console.log("Error Removing LocalVideo", err);
+                                }
+                            });
+                        }
                         return [4 /*yield*/, redisClient.del("module-ref:".concat(moduleId))];
-                    case 4:
+                    case 5:
                         _a.sent();
-                        _a.label = 5;
-                    case 5: return [2 /*return*/];
+                        _a.label = 6;
+                    case 6: return [2 /*return*/];
                 }
             });
         }); });

@@ -42,7 +42,7 @@ export const detectDeletedKeys = async () => {
             const moduleId = message.replace("module-", "")
             const s3UrlData = await redisClient.hget(`module-ref:${moduleId}`, "s3VideoUrl")
             const localVideoUrl = await redisClient.hget(`module-ref:${moduleId}`, "localVideoUrl")
-
+            const localSegmentVideoUrl = await redisClient.hget(`module-ref:${moduleId}`, "localSegmentDataurl")
             const updateData = await course_modules.update({
                 is_module_live: false,
                 video_url: s3UrlData
@@ -55,8 +55,13 @@ export const detectDeletedKeys = async () => {
                     }
                 })
             }
-
-
+            if (localSegmentVideoUrl) {
+                fs.unlink(localSegmentVideoUrl, (err) => {
+                    if (err) {
+                        console.log("Error Removing LocalVideo", err)
+                    }
+                })
+            }
             await redisClient.del(`module-ref:${moduleId}`)
         }
     })

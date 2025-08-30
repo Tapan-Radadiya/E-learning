@@ -79,7 +79,6 @@ export const formidableFieldsFormat = (fields: any): Record<string, any> => {
 }
 
 export const getFileSize = async (filePath: string): Promise<fs.Stats | null> => {
-    console.log('filePath-->', filePath);
     const data: fs.Stats | null = await new Promise((res, rej) => {
         fs.stat(filePath, (err, stat) => {
             if (err) {

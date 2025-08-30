@@ -1,72 +1,73 @@
 import { Request } from "express";
-import { ApiResult, ApiResultInterface, ExtractFormData, formidableFieldsFormat, getFileSize, validateWithZod } from "../utils/comman";
+import formidable, { Fields, Files } from "formidable";
+import { HLS_DIR_PATH, HLS_PUBLIC_PATH, TEMP_UPLOAD_PATH } from "../constants";
 import { courses } from "../models/course.schema";
 import { course_modules } from "../models/module.schema";
-import { createCourseModuleZodValidation } from "../ZodValidation/create_module.zod";
-import formidable, { Files, Fields } from "formidable";
-import * as path from "path"
-import { TEMP_UPLOAD_PATH } from "../constants";
-import { Worker } from "worker_threads";
 import { DeleteFileFromS3 } from "../utils/awsS3.utils";
-import { getRedisClient } from "../config/connectRedis.config";
-import getVideoDurationInSeconds from "get-video-duration";
+import { ApiResult, ApiResultInterface, ExtractFormData, formidableFieldsFormat, validateWithZod } from "../utils/comman";
 import { initVideoUploadWorkerProcess } from "../utils/workerProcessInit.utils";
+import { createCourseModuleZodValidation } from "../ZodValidation/create_module.zod";
+import { getRedisClient } from "../config/connectRedis.config";
 
 
 
 const AddCourseModuleService = async (req: Request): Promise<ApiResultInterface> => {
+    try {
 
-    let moduleId
-    const { courseId } = req.params
-    const isValidCourse = await courses.findOne({ where: { id: courseId } })
-    if (!isValidCourse) {
-        return ApiResult({ statusCode: 404, message: "Course not found" })
-    }
+        let moduleId
+        const { courseId } = req.params
+        const isValidCourse = await courses.findOne({ where: { id: courseId } })
+        if (!isValidCourse) {
+            return ApiResult({ statusCode: 404, message: "Course not found" })
+        }
 
-    const form = formidable({
-        allowEmptyFiles: false,
-        multiples: false,
-        uploadDir: TEMP_UPLOAD_PATH,
-        keepExtensions: true,
-    })
-
-
-    const [fieldsData, files]: [Fields, Files] = await form.parse(req)
-    if (Object.keys(files).length === 0) {
-        return ApiResult({ message: "Please Provide Module Video", statusCode: 409 })
-    }
-
-    const fields = formidableFieldsFormat(fieldsData)
-
-    const isValid = validateWithZod(createCourseModuleZodValidation, fields)
-
-    if (!isValid.success) {
-        return ApiResult({ message: "Invalid Data", data: isValid, statusCode: 400 })
-    }
-
-    const course_moduleData = await course_modules.create({
-        course_id: courseId,
-        video_url: files?.video?.[0].filepath ?? '',
-        title: fields.title,
-        description: fields.description,
-        completion_percentage: fields.completion_percentage
-    })
-
-    moduleId = course_moduleData.getDataValue("id")
-    if (Array.isArray(files.video) && files.video.length > 0) {
-        // Adding Data In Worker Process
-        await initVideoUploadWorkerProcess({
-            courseId,
-            moduleId,
-            files
+        const form = formidable({
+            allowEmptyFiles: false,
+            multiples: false,
+            uploadDir: TEMP_UPLOAD_PATH,
+            keepExtensions: true,
         })
-    }
 
-    if (course_moduleData) {
-        return ApiResult({ statusCode: 201, message: "Module Created Successfully" })
-    }
-    else {
-        return ApiResult({ statusCode: 403, message: "Error Creating Module Try After SomeTime" })
+
+        const [fieldsData, files]: [Fields, Files] = await form.parse(req)
+        if (Object.keys(files).length === 0) {
+            return ApiResult({ message: "Please Provide Module Video", statusCode: 409 })
+        }
+
+        const fields = formidableFieldsFormat(fieldsData)
+
+        const isValid = validateWithZod(createCourseModuleZodValidation, fields)
+
+        if (!isValid.success) {
+            return ApiResult({ message: "Invalid Data", data: isValid, statusCode: 400 })
+        }
+
+        const course_moduleData = await course_modules.create({
+            course_id: courseId,
+            video_url: files?.video?.[0].filepath ?? '', // Video Path Stored In Memory 
+            title: fields.title,
+            description: fields.description,
+            completion_percentage: fields.completion_percentage
+        })
+
+        moduleId = course_moduleData.getDataValue("id")
+        if (Array.isArray(files.video) && files.video.length > 0) {
+            // Adding Data In Worker Process
+            await initVideoUploadWorkerProcess({
+                courseId,
+                moduleId,
+                files
+            })
+        }
+
+        if (course_moduleData) {
+            return ApiResult({ statusCode: 201, message: "Module Created Successfully" })
+        }
+        else {
+            return ApiResult({ statusCode: 403, message: "Error Creating Module Try After SomeTime" })
+        }
+    } catch (error) {
+        return ApiResult({ statusCode: 500, message: "Internal Server Error" })
     }
 }
 
@@ -136,19 +137,7 @@ const getModuleDetailsService = async (moduleId: string): Promise<ApiResultInter
             raw: true
         })
         if (moduleDetails) {
-            
-            // if (moduleDetails.getDataValue("is_module_live")) {
-            //     const range = initRange
-            //     const fileData = await getFileSize(moduleDetails.getDataValue("video_url"))
-            //     if (!fileData) {
-            //         return ApiResult({ statusCode: 409, message: "Error Starting Video Stream" })
-            //     } else {
-
-            //     }
-            // } else {
-            
             return ApiResult({ statusCode: 200, message: "Data Fetched", data: moduleDetails })
-            // }
         } else {
             return ApiResult({ statusCode: 409, message: "Error Fetching Data" })
         }
@@ -157,10 +146,37 @@ const getModuleDetailsService = async (moduleId: string): Promise<ApiResultInter
         return ApiResult({ statusCode: 500, message: "Internal Server Error" })
     }
 }
+
+const getM3U8FileDetailsService = async (moduleId: string): Promise<ApiResultInterface> => {
+    const redisClient = getRedisClient()
+    const moduleRedisData = await redisClient?.hgetall(`module-${moduleId}`)
+
+    if (moduleRedisData) {
+        const userReqTime = Date.now()
+        console.log('userReqTime-->', userReqTime);
+        const response = {
+            videoUrl: `${HLS_PUBLIC_PATH}/${moduleId}/index.m3u8`
+        }
+        return ApiResult({ statusCode: 200, message: "Data Fetched", data: response })
+    } else {
+        const data = await getModuleDetailsService(moduleId)
+        if (data.statusCode === 200) {
+            // send Frontend s3 image Url
+            // data.data.video_url
+            const response = {
+                videoUrl: data.data.video_url
+            }
+            return ApiResult({ statusCode: 200, message: "Data Fetched", data: response })
+        } else {
+            return ApiResult({ statusCode: 409, message: "Error Fetching Data" })
+        }
+    }
+}
 export {
     AddCourseModuleService,
-    removeCourseModuleService,
     getAllCourseModuleService,
+    getModuleDetailsService,
+    removeCourseModuleService,
     updateCourseModuleService,
-    getModuleDetailsService
-}
+    getM3U8FileDetailsService
+};

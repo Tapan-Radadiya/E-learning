@@ -15,3 +15,6 @@ export const WORKER_PROCESS_MESSAGE = {
     SUCCESS: 'ALL_PROCESS_COMPLETED_SUCCESSFULLY',
     FAILURE: 'ERROR_COMPLETING_PROCESS'
 }
+
+export const HLS_DIR_PATH = path.join(__dirname, "../../uploads/HLS_DIR")
+export const HLS_PUBLIC_PATH = `http://localhost:${process.env.PORT}/stream-data`
