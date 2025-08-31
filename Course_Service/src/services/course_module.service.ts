@@ -172,6 +172,12 @@ const getM3U8FileDetailsService = async (moduleId: string): Promise<ApiResultInt
         }
     }
 }
+
+
+const testm3u8FileTestService = (moduleId: string) => {
+    const m3u8FilePath = `${HLS_PUBLIC_PATH}/${moduleId}/index.m3u8`;
+
+}
 export {
     AddCourseModuleService,
     getAllCourseModuleService,

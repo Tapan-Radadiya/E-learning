@@ -78,7 +78,6 @@ const getModuleDetails = async (req: Request, res: Response) => {
 
 const getM3U8FileDetails = async (req: Request, res: Response) => {
     const { moduleId } = req.params
-    console.log('New APi moduleId -->', moduleId);
     try {
         if (!uuidvalidate(moduleId)) {
             res.status(409).json(ApiResult({ message: "Invalid Module Id" }))
@@ -87,6 +86,24 @@ const getM3U8FileDetails = async (req: Request, res: Response) => {
 
         const data = await getM3U8FileDetailsService(moduleId)
         res.status(data.statusCode!).json(data)
+    } catch (error) {
+        console.log('error->', error)
+        res.status(500).json(ApiResult({ message: "Internal Server Error" }))
+        return
+    }
+}
+
+
+const testCustomm3u8File = async (req: Request, res: Response) => {
+    const { moduleId } = req.params
+
+    try {
+        if (!uuidvalidate(moduleId)) {
+            res.status(409).json(ApiResult({ message: "Invalid Module Id" }))
+            return
+        }
+
+        
     } catch (error) {
         console.log('error->', error)
         res.status(500).json(ApiResult({ message: "Internal Server Error" }))
