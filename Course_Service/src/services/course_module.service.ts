@@ -149,13 +149,12 @@ const getModuleDetailsService = async (moduleId: string): Promise<ApiResultInter
 
 const getM3U8FileDetailsService = async (moduleId: string): Promise<ApiResultInterface> => {
     const redisClient = getRedisClient()
-    const moduleRedisData = await redisClient?.hgetall(`module-${moduleId}`)
-
-    if (moduleRedisData) {
+    const moduleRedisData = await redisClient?.hgetall(`module-${moduleId}`) ?? {}
+    if (Object.keys(moduleRedisData).length > 0) {
         const userReqTime = Date.now()
-        console.log('userReqTime-->', userReqTime);
         const response = {
-            videoUrl: `${HLS_PUBLIC_PATH}/${moduleId}/index.m3u8`
+            videoUrl: `${HLS_PUBLIC_PATH}/${moduleId}/index.m3u8`,
+            videoType: 'application/x-mpegURL'
         }
         return ApiResult({ statusCode: 200, message: "Data Fetched", data: response })
     } else {
@@ -164,7 +163,8 @@ const getM3U8FileDetailsService = async (moduleId: string): Promise<ApiResultInt
             // send Frontend s3 image Url
             // data.data.video_url
             const response = {
-                videoUrl: data.data.video_url
+                videoUrl: `${process.env.AWS_CLOUD_FRONT_URL}${data.data.video_url}`,
+                videoType: 'video/mp4'
             }
             return ApiResult({ statusCode: 200, message: "Data Fetched", data: response })
         } else {
