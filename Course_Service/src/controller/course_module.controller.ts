@@ -85,7 +85,13 @@ const getM3U8FileDetails = async (req: Request, res: Response) => {
         }
 
         const data = await getM3U8FileDetailsService(moduleId)
-        res.status(data.statusCode!).json(data)
+        if (data.statusCode === 206) {
+            res.type("application/vnd.apple.mpegurl").send(data.data)
+            return
+        } else {
+            res.status(data.statusCode!).json(data)
+            return
+        }
     } catch (error) {
         console.log('error->', error)
         res.status(500).json(ApiResult({ message: "Internal Server Error" }))
@@ -103,7 +109,7 @@ const testCustomm3u8File = async (req: Request, res: Response) => {
             return
         }
 
-        
+
     } catch (error) {
         console.log('error->', error)
         res.status(500).json(ApiResult({ message: "Internal Server Error" }))

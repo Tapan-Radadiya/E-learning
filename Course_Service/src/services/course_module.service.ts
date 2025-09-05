@@ -4,10 +4,12 @@ import { HLS_DIR_PATH, HLS_PUBLIC_PATH, TEMP_UPLOAD_PATH } from "../constants";
 import { courses } from "../models/course.schema";
 import { course_modules } from "../models/module.schema";
 import { DeleteFileFromS3 } from "../utils/awsS3.utils";
-import { ApiResult, ApiResultInterface, ExtractFormData, formidableFieldsFormat, validateWithZod } from "../utils/comman";
+import { ApiResult, ApiResultInterface, ExtractFormData, formidableFieldsFormat, getFileData, validateWithZod } from "../utils/comman";
 import { initVideoUploadWorkerProcess } from "../utils/workerProcessInit.utils";
 import { createCourseModuleZodValidation } from "../ZodValidation/create_module.zod";
 import { getRedisClient } from "../config/connectRedis.config";
+import * as fs from "fs";
+import { integer } from "aws-sdk/clients/cloudfront";
 
 
 
@@ -150,18 +152,31 @@ const getModuleDetailsService = async (moduleId: string): Promise<ApiResultInter
 const getM3U8FileDetailsService = async (moduleId: string): Promise<ApiResultInterface> => {
     const redisClient = getRedisClient()
     const moduleRedisData = await redisClient?.hgetall(`module-${moduleId}`) ?? {}
+
+
+
     if (Object.keys(moduleRedisData).length > 0) {
         const userReqTime = Date.now()
-        const response = {
-            videoUrl: `${HLS_PUBLIC_PATH}/${moduleId}/index.m3u8`,
-            videoType: 'application/x-mpegURL'
+        // const response = {
+        //     videoUrl: `${HLS_PUBLIC_PATH}/${moduleId}/index.m3u8`,
+        //     videoType: 'application/x-mpegURL'
+        // }
+
+        const fileData = await getFileData(`${HLS_DIR_PATH}/${moduleId}/index.m3u8`)
+
+        const timePassed = Math.floor((userReqTime - parseInt(moduleRedisData.videoUploadedTime)) / 1000)
+
+        if (!fileData) {
+            return ApiResult({ statusCode: 404, message: "Unable TO Find Video Try Again Latter" })
         }
-        return ApiResult({ statusCode: 200, message: "Data Fetched", data: response })
+
+        const newFileData = getUserSegments(fileData, timePassed, moduleId)
+
+        return ApiResult({ statusCode: 206, message: "Data Fetched", data: newFileData })
     } else {
+        // send Frontend s3 image Url
         const data = await getModuleDetailsService(moduleId)
         if (data.statusCode === 200) {
-            // send Frontend s3 image Url
-            // data.data.video_url
             const response = {
                 videoUrl: `${process.env.AWS_CLOUD_FRONT_URL}${data.data.video_url}`,
                 videoType: 'video/mp4'
@@ -174,10 +189,49 @@ const getM3U8FileDetailsService = async (moduleId: string): Promise<ApiResultInt
 }
 
 
-const testm3u8FileTestService = (moduleId: string) => {
-    const m3u8FilePath = `${HLS_PUBLIC_PATH}/${moduleId}/index.m3u8`;
 
+const getUserSegments = (fileData: string, userDuration: integer, moduleId: string): string | null => {
+
+    const fileArrayData = fileData.split("#")
+    // First 5 Lines Which Have Segment Split Time(Important)
+    const m3u8FileMetaData = fileArrayData.slice(0, 5)
+
+    const segmentData = fileArrayData.slice(5)
+
+    // REgex For #EXTINF:10.500000
+    const regex = /EXTINF:(\d+(\.\d+)?),\n([^\n]+)\n/g;
+    let totalTime = 0
+    const newSegments = []
+    if (Array.isArray(segmentData)) {
+        for (let i = 0; i < segmentData.length; i++) {
+            const ele = segmentData[i]
+            if (ele.matchAll(regex)) {
+                if (totalTime > userDuration) {
+
+                    const lines = ele.split(",")
+
+                    const exinfLine = lines[0].trim()
+
+                    const segmentFileName = lines[1].trim()
+                    const segmentUrl = `${HLS_PUBLIC_PATH}/${moduleId}/${segmentFileName}`;
+                    newSegments.push(`${exinfLine},\n${segmentUrl}\n`)
+
+                } else {
+                    const segmentTime = parseFloat(ele.slice(7, 10))
+                    totalTime += segmentTime
+                }
+            }
+        }
+    }
+
+    let pendingSegmentFileData = null
+    if (newSegments.length > 0) {
+        const allFileData = m3u8FileMetaData.concat(newSegments)
+        pendingSegmentFileData = allFileData.join("#")
+    }
+    return pendingSegmentFileData
 }
+
 export {
     AddCourseModuleService,
     getAllCourseModuleService,

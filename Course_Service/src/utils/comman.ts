@@ -90,3 +90,23 @@ export const getFileSize = async (filePath: string): Promise<fs.Stats | null> =>
     })
     return data
 }
+
+export const getFileData = async (filePath: string): Promise<string | null> => {
+    if (fs.existsSync(filePath)) {
+        const data: string | null = await new Promise((res, rej) => {
+            fs.readFile(filePath, 'utf-8', (err, stat) => {
+                if (err) {
+                    rej(null)
+                } else {
+                    res(stat)
+                }
+            })
+        })
+
+        return data
+    }
+    else {
+        console.log("❌ File Not Exists")
+        return null
+    }
+}

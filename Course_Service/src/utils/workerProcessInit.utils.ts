@@ -45,7 +45,9 @@ export const initVideoUploadWorkerProcess = async ({ files, moduleId, courseId }
                 const data = await redisClient?.hgetall(`module-${moduleId}`)
                 if (data) {
                     const videoDuration = await getVideoDurationInSeconds(data.localVideoUrl)
-
+                    await redisClient.hset(`module-${moduleId}`, {
+                        videoDuration: videoDuration.toFixed()
+                    })
                     await redisClient?.expire(`module-${moduleId}`, videoDuration.toFixed())
 
                     await redisClient?.hset(`module-ref:${moduleId}`, {
