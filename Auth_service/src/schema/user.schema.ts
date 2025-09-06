@@ -25,6 +25,15 @@ export const user = db.define('user', {
         allowNull: false,
         defaultValue: 'USER'
     },
+    speakeasy_key: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    is_mfa_enabled: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
     createdAt: {
         type: DataTypes.TIME,
         allowNull: false,

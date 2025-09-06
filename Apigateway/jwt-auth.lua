@@ -30,6 +30,12 @@ if not jwt_obj["verified"] then
     return ngx.exit(ngx.HTTP_UNAUTHORIZED)
 end
 
+if not jwt_obj.payload.mfa then
+    ngx.status = ngx.HTTP_UNAUTHORIZED
+    ngx.say("Please Enable MFA")
+    return ngx.exit(ngx.HTTP_UNAUTHORIZED)
+end
+
 if jwt_obj["verified"] then
     ngx.log(ngx.OK, "JWT Verified")
 end

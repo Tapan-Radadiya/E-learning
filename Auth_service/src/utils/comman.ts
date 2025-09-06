@@ -34,7 +34,7 @@ export const compareText = async (plainText: string, hashedText: string): Promis
     return hash === hashedText
 }
 
-export const generateAccessToken = async (jwtPayload: { id: string, email: string, role: Role }) => {
+export const generateAccessToken = async (jwtPayload: { id: string, email: string, role: Role, mfa: boolean }) => {
     const access_secret: string = process.env.JWT_ACCESS_KEY_SECRET! as string
     const access_secret_TTL = process.env.JWT_ACCESS_KEY_TTL as ms.StringValue
     const signedToken = jwt.sign(jwtPayload, access_secret, {

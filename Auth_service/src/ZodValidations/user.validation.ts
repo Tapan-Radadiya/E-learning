@@ -9,6 +9,12 @@ const zodUserCreateValidation = z.object({
 
 const zodUserLoginValidation = z.object({
     email: z.string().email(),
-    password: z.string()
+    password: z.string(),
+    otp: z.string(),
 })
-export { zodUserCreateValidation, zodUserLoginValidation }
+
+const zodUserMFAEnableValidation = z.object({
+    token: z.string(),
+    email: z.string().email(),
+})
+export { zodUserCreateValidation, zodUserLoginValidation, zodUserMFAEnableValidation }

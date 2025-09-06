@@ -1,7 +1,13 @@
 import { Request, Response } from "express";
 import { ApiResult, validateWithZod } from "../utils/comman"
-import { zodUserCreateValidation, zodUserLoginValidation } from "../ZodValidations/user.validation"
-import { addUserService, getUserProfileService, loginUserService, reevaluteRefreshToken } from "../services/index.service"
+import { zodUserCreateValidation, zodUserLoginValidation, zodUserMFAEnableValidation } from "../ZodValidations/user.validation"
+import {
+    addUserService,
+    getUserProfileService,
+    loginUserService,
+    reevaluteRefreshToken,
+    enableMFAService
+} from "../services/index.service"
 
 const createUserController = async (req: Request, res: Response) => {
     if (!req.body) {
@@ -20,6 +26,33 @@ const createUserController = async (req: Request, res: Response) => {
         } else {
             res.status(409).json(ApiResult({ message: data.message }))
         }
+    } catch (error) {
+        console.log('erroor->', error)
+        res.status(500).json(ApiResult({ message: "Internal Server Error", err: error as Error }))
+        return
+    }
+}
+
+
+const enableMFA = async (req: Request, res: Response) => {
+    if (!req.body) {
+        res.status(400).json(ApiResult({ message: "No Data Found In Body" }))
+        return
+    }
+    const isValidData = validateWithZod(zodUserMFAEnableValidation, req.body)
+    if (!isValidData) {
+        res.status(400).json(ApiResult({ message: "Invalid Data", data: isValidData }))
+        return
+    }
+
+    try {
+        const reqBodyData = {
+            userEmailId: req.body.email,
+            otp: req.body.otp
+        }
+        const data = await enableMFAService(reqBodyData)
+        res.status(data.statusCode!).json(ApiResult({ message: data.message, data: data.data ?? {} }))
+        return
     } catch (error) {
         console.log('erroor->', error)
         res.status(500).json(ApiResult({ message: "Internal Server Error", err: error as Error }))
@@ -86,4 +119,4 @@ const getUserProfile = async (req: Request, res: Response) => {
     }
 }
 
-export { createUserController, loginUser, refreshTokenData, getUserProfile }
+export { createUserController, loginUser, refreshTokenData, getUserProfile, enableMFA }
