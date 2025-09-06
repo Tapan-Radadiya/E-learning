@@ -107,11 +107,14 @@ const initFfmpegSegmentationEvent = async (moduleId: string) => {
                 segmentCount += 1
             }
 
-            if (segmentCount > 3 && !redisDataUpdated) {
-                console.log("Redis Updated")
+            if (segmentCount > 5 && !redisDataUpdated) {
+                console.log("Enough Segments Created")
                 redisDataUpdated = true
                 await redisClient?.hset(`module-${moduleId}`, {
                     isVideoAvailForStream: true
+                })
+                await redisClient?.hset(`module-${moduleId}`, {
+                    videoUploadedTime: Date.now()
                 })
             }
         })

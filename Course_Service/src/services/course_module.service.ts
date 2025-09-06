@@ -1,6 +1,6 @@
 import { Request } from "express";
 import formidable, { Fields, Files } from "formidable";
-import { HLS_DIR_PATH, HLS_PUBLIC_PATH, TEMP_UPLOAD_PATH } from "../constants";
+import { HLS_DIR_PATH, HLS_PUBLIC_PATH, LIVE_STREAM_SEGMENT_DATA, TEMP_UPLOAD_PATH } from "../constants";
 import { courses } from "../models/course.schema";
 import { course_modules } from "../models/module.schema";
 import { DeleteFileFromS3 } from "../utils/awsS3.utils";
@@ -153,26 +153,15 @@ const getM3U8FileDetailsService = async (moduleId: string): Promise<ApiResultInt
     const redisClient = getRedisClient()
     const moduleRedisData = await redisClient?.hgetall(`module-${moduleId}`) ?? {}
 
-
-
     if (Object.keys(moduleRedisData).length > 0) {
-        const userReqTime = Date.now()
-        // const response = {
-        //     videoUrl: `${HLS_PUBLIC_PATH}/${moduleId}/index.m3u8`,
-        //     videoType: 'application/x-mpegURL'
-        // }
 
-        const fileData = await getFileData(`${HLS_DIR_PATH}/${moduleId}/index.m3u8`)
-
-        const timePassed = Math.floor((userReqTime - parseInt(moduleRedisData.videoUploadedTime)) / 1000)
-
-        if (!fileData) {
-            return ApiResult({ statusCode: 404, message: "Unable TO Find Video Try Again Latter" })
+        // Send Live Segment URL
+        const response = {
+            videoUrl: `${LIVE_STREAM_SEGMENT_DATA}/${moduleId}/index.m3u8`,
+            videoType: 'application/x-mpegURL'
         }
 
-        const newFileData = getUserSegments(fileData, timePassed, moduleId)
-
-        return ApiResult({ statusCode: 206, message: "Data Fetched", data: newFileData })
+        return ApiResult({ statusCode: 200, message: "Data Fetched", data: response })
     } else {
         // send Frontend s3 image Url
         const data = await getModuleDetailsService(moduleId)
@@ -187,8 +176,6 @@ const getM3U8FileDetailsService = async (moduleId: string): Promise<ApiResultInt
         }
     }
 }
-
-
 
 const getUserSegments = (fileData: string, userDuration: integer, moduleId: string): string | null => {
 
@@ -207,7 +194,10 @@ const getUserSegments = (fileData: string, userDuration: integer, moduleId: stri
             const ele = segmentData[i]
             if (ele.matchAll(regex)) {
                 if (totalTime > userDuration) {
-
+                    if (ele === 'EXT-X-ENDLIST') {
+                        console.log("Segment Creation Completed ✅")
+                        break
+                    }
                     const lines = ele.split(",")
 
                     const exinfLine = lines[0].trim()
@@ -232,11 +222,53 @@ const getUserSegments = (fileData: string, userDuration: integer, moduleId: stri
     return pendingSegmentFileData
 }
 
+
+
+const customUserSegmentService = async (moduleId: string) => {
+    const redisClient = getRedisClient()
+
+    const moduleRedisData = await redisClient?.hgetall(`module-${moduleId}`) ?? {}
+
+    if (Object.keys(moduleRedisData).length > 0) {
+        const userReqTime = Date.now()
+        const timePassed = Math.floor((userReqTime - parseInt(moduleRedisData.videoUploadedTime)) / 1000)
+        console.log('Boolean(moduleRedisData.isAllSegmentCreated)-->', moduleRedisData.isAllSegmentCreated);
+        if (moduleRedisData.isAllSegmentCreated === 'true' && !moduleRedisData.moduleM3u8FileData) {
+            await redisClient?.hset(`module-${moduleId}`, {
+                moduleM3u8FileData: await getFileData(`${HLS_DIR_PATH}/${moduleId}/index.m3u8`)
+            })
+
+            const fileData = await redisClient?.hget(`module-${moduleId}`, "moduleM3u8FileData")
+            if (!fileData) {
+                return ApiResult({ statusCode: 404, message: "Unable TO Find Video Try Again Latter" })
+            }
+            const newFileData = getUserSegments(fileData, timePassed, moduleId)
+            console.log("✅ Served From Redis")
+            return newFileData
+        }
+        else {
+            const fileData = await getFileData(`${HLS_DIR_PATH}/${moduleId}/index.m3u8`)
+
+            if (!fileData) {
+                return ApiResult({ statusCode: 404, message: "Unable TO Find Video Try Again Latter" })
+            }
+
+            const newFileData = getUserSegments(fileData, timePassed, moduleId)
+            console.log("❌ Served From ReadFile")
+            return newFileData
+        }
+    } else {
+        // TODO Need To Change
+        return ''
+    }
+
+}
 export {
     AddCourseModuleService,
     getAllCourseModuleService,
     getModuleDetailsService,
     removeCourseModuleService,
     updateCourseModuleService,
-    getM3U8FileDetailsService
+    getM3U8FileDetailsService,
+    customUserSegmentService
 };

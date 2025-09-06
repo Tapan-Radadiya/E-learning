@@ -18,3 +18,4 @@ export const WORKER_PROCESS_MESSAGE = {
 
 export const HLS_DIR_PATH = path.join(__dirname, "../uploads/HLS_DIR")
 export const HLS_PUBLIC_PATH = `http://localhost:${process.env.PORT}/stream-data`
+export const LIVE_STREAM_SEGMENT_DATA = `http://localhost:${process.env.PORT}/course-module/custom-segment-data`

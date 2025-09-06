@@ -1,6 +1,14 @@
 import express from "express"
 import { AuthenticateUser, AuthorizeUser } from "shared-middleware"
-import { AddCourseModule, fetchCourseModules, removeModule, updateModules, getModuleDetails, getM3U8FileDetails } from "../controller/course_module.controller"
+import {
+    AddCourseModule,
+    fetchCourseModules,
+    removeModule,
+    updateModules,
+    getModuleDetails,
+    getM3U8FileDetails,
+    getCustomSegmentFileData
+} from "../controller/course_module.controller"
 import { Role } from "shared-middleware/dist/utils/comman"
 const router = express.Router()
 
@@ -11,4 +19,5 @@ router.route('/update-modules/:moduleId').put(AuthenticateUser, AuthorizeUser([R
 // router.route('/get-module-details/:moduleId').get(AuthenticateUser, getModuleDetails)
 router.route('/get-module-details/:moduleId').get(getModuleDetails)
 router.route('/get-module-url/:moduleId').get(getM3U8FileDetails)
+router.route('/custom-segment-data/:moduleId/index.m3u8').get(getCustomSegmentFileData)
 export default router
