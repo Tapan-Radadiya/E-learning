@@ -9,7 +9,8 @@ export interface ApiResultInterface {
 }
 
 export enum EMAIL_TYPE {
-    USER_CREATION = "USER_CREATION"
+    USER_CREATION = "USER_CREATION",
+    COURSE_ENROLLMENT_FAILED = "COURSE_ENROLLMENT_FAILED"
 }
 
 export enum SQS_MESSAGE_GROUP_ID {

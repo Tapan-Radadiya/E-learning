@@ -113,4 +113,41 @@ const COURSE_ENROLLMENT_TEMPLATE = (data: {
   `;
 }
 
-export { COURSE_COMPLETION_TEMPLATE, FIRST_ENROLLMENT_TEMPLATE, COURSE_ENROLLMENT_TEMPLATE }
+
+const ENROLLMENT_FAILED = (data: {
+  userEmail: string,
+  courseName: string,
+  time: string
+}) => {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Enrollment Failed</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f6f9fc; margin: 0; padding: 0;">
+  <div style="max-width: 600px; background: #ffffff; margin: 40px auto; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);">
+    <h2 style="color: #d93025; margin-bottom: 10px;">⚠ Enrollment Failed</h2>
+    <p style="color: #444444; line-height: 1.6;">Hello Admin,</p>
+    <p style="color: #444444; line-height: 1.6;">The system was unable to complete a user enrollment. Please review the details below:</p>
+    
+    <div style="margin: 20px 0; padding: 15px; background: #f9f9f9; border-left: 4px solid #d93025; border-radius: 6px;">
+      <p style="margin: 6px 0; font-size: 14px; color:#444444;"><strong>User Email:</strong> ${data.userEmail} </p>
+      <p style="margin: 6px 0; font-size: 14px; color:#444444;"><strong>Course Name:</strong> ${data.courseName} </p>
+      <p style="margin: 6px 0; font-size: 14px; color:#444444;"><strong>Time:</strong> ${data.time} </p>
+    </div>
+    
+    <p style="color: #444444; line-height: 1.6;">You may need to manually verify the issue or reach out to the user.</p>
+    
+    <p style="color: #444444; line-height: 1.6;">Best Regards,<br/>Your LMS Team</p>
+    
+    <div style="margin-top: 20px; font-size: 12px; color: #777; text-align: center;">
+      <p>This is an automated message. Please do not reply.</p>
+    </div>
+  </div>
+</body>
+</html>
+`
+}
+
+export { COURSE_COMPLETION_TEMPLATE, FIRST_ENROLLMENT_TEMPLATE, COURSE_ENROLLMENT_TEMPLATE, ENROLLMENT_FAILED }

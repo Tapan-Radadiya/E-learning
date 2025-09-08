@@ -232,7 +232,6 @@ const customUserSegmentService = async (moduleId: string) => {
     if (Object.keys(moduleRedisData).length > 0) {
         const userReqTime = Date.now()
         const timePassed = Math.floor((userReqTime - parseInt(moduleRedisData.videoUploadedTime)) / 1000)
-        console.log('Boolean(moduleRedisData.isAllSegmentCreated)-->', moduleRedisData.isAllSegmentCreated);
         if (moduleRedisData.isAllSegmentCreated === 'true' && !moduleRedisData.moduleM3u8FileData) {
             await redisClient?.hset(`module-${moduleId}`, {
                 moduleM3u8FileData: await getFileData(`${HLS_DIR_PATH}/${moduleId}/index.m3u8`)

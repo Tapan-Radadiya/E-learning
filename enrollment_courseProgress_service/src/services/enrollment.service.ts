@@ -3,7 +3,9 @@ import { user_enrollments } from "../schema/enrollment.schema"
 import { course_progresses } from "../schema/courseProgress.schema"
 import { CourseDataInterface, fetchUserXp, fetchXpEventData, getCourseDataGRPCService, getUsersDataGRPCService, triggerUserXpEvent } from "../GrpcServices/client/courseService.grpc";
 import { EMAIL_TYPE, pushDataToSQS, SQS_MESSAGE_GROUP_ID } from "shared-middleware/src/utils/comman"
-import { COURSE_ENROLLMENT_TEMPLATE, FIRST_ENROLLMENT_TEMPLATE } from "../EmailTemplates/emailTemplates";
+import { COURSE_ENROLLMENT_TEMPLATE, ENROLLMENT_FAILED, FIRST_ENROLLMENT_TEMPLATE } from "../EmailTemplates/emailTemplates";
+import sequelize from "sequelize";
+import { db } from "../config/index.config";
 
 const enrollUserService = async (courseData: CourseDataInterface, user_id: string): Promise<ApiResultInterface> => {
 
@@ -15,20 +17,30 @@ const enrollUserService = async (courseData: CourseDataInterface, user_id: strin
     }
 
     const userEnrollmentData = await user_enrollments.findAll({ where: { user_id }, raw: true })
-
     IS_FIRST_ENROLLMENT = userEnrollmentData.length === 0
 
-    const enrollUser = await user_enrollments.create({ user_id, course_id: courseData.id })
-    if (enrollUser) {
-        // Add Result In CourseProgress
-        await course_progresses.create({
-            user_id,
-            course_id: courseData.id,
-            progress_percent: 0,
-            is_completed: false
+    const userData = await getUsersDataGRPCService([user_id])
+    if (!userData || (Array.isArray(userData) && userData?.length === 0)) {
+        return ApiResult({ statusCode: 404, message: "Error Fetching UserData Try After SomeTIme" })
+    }
+
+    // const result = await 
+    try {
+
+        // Transactions
+        const result = await db.transaction(async (t) => {
+            const enrollUser = await user_enrollments.create({ user_id, course_id: courseData.id }, { transaction: t })
+
+            await course_progresses.create({
+                user_id,
+                course_id: courseData.id,
+                progress_percent: 0,
+                is_completed: false
+            }, { transaction: t })
+            return enrollUser
         })
 
-        const userData = await getUsersDataGRPCService([user_id])
+        // throw new Error()
         const userXpData = await fetchUserXp(user_id)
         // Grpc Call
         if (IS_FIRST_ENROLLMENT) {
@@ -73,8 +85,21 @@ const enrollUserService = async (courseData: CourseDataInterface, user_id: strin
             }
         }
         return ApiResult({ statusCode: 201, message: "User Is Enrolled Successfully" })
-    } else {
-        return ApiResult({ statusCode: 409, message: "Error Enrolling User Try After Some Time" })
+    } catch (error) {
+        console.log("❌ Transaction Failed")
+        await user_enrollments.destroy({ where: { user_id, course_id: courseData.id } })
+        await course_progresses.destroy({ where: { user_id, course_id: courseData.id } })
+
+        const emailBody = ENROLLMENT_FAILED({ courseName: courseData.title, userEmail: userData[0].email, time: String(new Date()) })
+
+        await pushDataToSQS({
+            body: emailBody,
+            emailType: EMAIL_TYPE.COURSE_ENROLLMENT_FAILED,
+            messageGroupId: SQS_MESSAGE_GROUP_ID.Email_Sending,
+            subject: 'Course Enrollment',
+            to: process.env.ADMIN_EMAIL_ID!
+        })
+        return ApiResult({ statusCode: 500, message: "Error Enrolling User Try After Some Time" })
     }
 }
 
