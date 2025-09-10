@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"os"
 	"quiz_service/model"
 
 	"gorm.io/driver/postgres"
@@ -12,7 +13,12 @@ import (
 var DB *gorm.DB
 
 func ConnectDb() {
-	dsn := "host=localhost user=QuickSilverDB password=QuickSilverDB dbname=quick_silver_db port=5437"
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s",
+		os.Getenv("DATABASE_HOST"),
+		os.Getenv("DATABASE_USER"),
+		os.Getenv("DATABASE_PASSWORD"),
+		os.Getenv("DATABASE_DB_NAME"),
+		os.Getenv("DATABASE_PORT"))
 	var err error
 
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -20,7 +26,7 @@ func ConnectDb() {
 	if err != nil {
 		log.Fatal("Error Creating Gorm")
 	}
-	fmt.Println("(Quiz Service) Postgress DB Connected At 5437")
+	fmt.Println("(Quiz Service) Postgress DB Connected At 5440")
 	DB.AutoMigrate(
 		&model.McqOptions{},
 		&model.Mcqs{},

@@ -1,10 +1,10 @@
 {
   "development": {
-    "username": "FridayDB",
-    "password": "FridayDB",
+    "username": "tapan",
+    "password": "tapan_Taps",
     "database": "friday_db",
     "host": "localhost",
-    "port":5435,
+    "port": 5440,
     "dialect": "postgres"
   },
   "test": {

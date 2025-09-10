@@ -26,6 +26,6 @@ func ConnectDB() {
 	if err != nil {
 		log.Fatal("Error Connecting With DB")
 	}
-
+	fmt.Println("Connected With DB 🚀")
 	DB.AutoMigrate(&model.UserXp{}, &model.UserXpEvents{})
 }

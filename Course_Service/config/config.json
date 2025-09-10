@@ -1,10 +1,10 @@
 {
   "development": {
-    "username": "VisionDB",
-    "password": "VisionDB",
+    "username": "tapan",
+    "password": "tapan_Taps",
     "database": "vision_db",
     "host": "localhost",
-    "port":5434,
+    "port": 5440,
     "dialect": "postgres"
   },
   "test": {

@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:alpine
+    container_name: e_learning_DB
+    environment: 
+      POSTGRES_USER: tapan
+      POSTGRES_PASSWORD: tapan_Taps
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    ports:
+      - "5440:5432"
+    networks:
+      - e_learning_database_network_v2
+
+volumes:
+  postgres_data:
+
+networks:
+  e_learning_database_network_v2:

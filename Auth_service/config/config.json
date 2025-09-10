@@ -1,10 +1,10 @@
 {
   "development": {
-    "username": "JarvisDB",
-    "password": "JarvisDB",
+    "username": "tapan",
+    "password": "tapan_Taps",
     "database": "jarvis_db",
     "host": "localhost",
-    "port":5433,
+    "port": 5440,
     "dialect": "postgres"
   },
   "test": {
