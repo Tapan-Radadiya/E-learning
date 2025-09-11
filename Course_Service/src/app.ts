@@ -8,7 +8,6 @@ import cors from "cors"
 import { HLS_DIR_PATH } from "./constants"
 const app = express()
 
-app.use(cors({ origin: "*" }))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use("/stream-data", express.static(HLS_DIR_PATH))

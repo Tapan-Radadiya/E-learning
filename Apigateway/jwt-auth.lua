@@ -7,7 +7,7 @@ local jwt_secret = "363dc8567faa897eb0fdef041f4997e0"
 
 local auth_header = ngx.var.http_Authorization
 
-ngx.log(ngx.OK, "Auth Header", auth_header)
+ngx.log(ngx.OK, "Auth Header: ", auth_header)
 
 if not auth_header then
     ngx.status = ngx.HTTP_UNAUTHORIZED

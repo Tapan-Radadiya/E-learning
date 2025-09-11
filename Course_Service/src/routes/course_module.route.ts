@@ -17,7 +17,7 @@ router.route('/remove-module/:moduleId').delete(AuthenticateUser, AuthorizeUser(
 router.route('/get-all-modules/:courseId').get(AuthenticateUser, fetchCourseModules)
 router.route('/update-modules/:moduleId').put(AuthenticateUser, AuthorizeUser([Role.ADMIN]), updateModules)
 // router.route('/get-module-details/:moduleId').get(AuthenticateUser, getModuleDetails)
-router.route('/get-module-details/:moduleId').get(getModuleDetails)
-router.route('/get-module-url/:moduleId').get(getM3U8FileDetails)
-router.route('/custom-segment-data/:moduleId/index.m3u8').get(getCustomSegmentFileData)
+router.route('/get-module-details/:moduleId').get(AuthenticateUser, getModuleDetails)
+router.route('/get-module-url/:moduleId').get(AuthenticateUser, getM3U8FileDetails)
+router.route('/custom-segment-data/:moduleId/index.m3u8').get(AuthenticateUser, getCustomSegmentFileData)
 export default router
