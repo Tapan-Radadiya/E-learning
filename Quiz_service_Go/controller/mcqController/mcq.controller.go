@@ -39,7 +39,7 @@ func (m *McqServiceController) AddMcq(c *fiber.Ctx) error {
 		fmt.Println("errrr", err)
 		return common.Response(c, fiber.StatusConflict, fiber.Map{"message": "Error Inserting Mcq", "error": err})
 	}
-	return common.Response(c, fiber.StatusOK, fiber.Map{"message": "Mcq Created", "data": data})
+	return common.Response(c, fiber.StatusCreated, fiber.Map{"message": "Mcq Created", "data": data})
 }
 
 func (m *McqServiceController) DeleteMcq(c *fiber.Ctx) error {

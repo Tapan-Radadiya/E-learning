@@ -13,7 +13,6 @@ import (
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
 )
 
@@ -25,7 +24,6 @@ func main() {
 
 	app := fiber.New()
 	app.Use(middleware.AuthincateUser)
-	app.Use(cors.New())
 
 	appStopSign := make(chan os.Signal, 1)
 	signal.Notify(appStopSign, os.Interrupt, syscall.SIGTERM)

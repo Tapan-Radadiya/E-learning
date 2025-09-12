@@ -16,8 +16,7 @@ router.route('/add-module/:courseId').post(AuthenticateUser, AuthorizeUser([Role
 router.route('/remove-module/:moduleId').delete(AuthenticateUser, AuthorizeUser([Role.ADMIN]), removeModule)
 router.route('/get-all-modules/:courseId').get(AuthenticateUser, fetchCourseModules)
 router.route('/update-modules/:moduleId').put(AuthenticateUser, AuthorizeUser([Role.ADMIN]), updateModules)
-// router.route('/get-module-details/:moduleId').get(AuthenticateUser, getModuleDetails)
 router.route('/get-module-details/:moduleId').get(AuthenticateUser, getModuleDetails)
 router.route('/get-module-url/:moduleId').get(AuthenticateUser, getM3U8FileDetails)
-router.route('/custom-segment-data/:moduleId/index.m3u8').get(AuthenticateUser, getCustomSegmentFileData)
+router.route('/custom-segment-data/:moduleId/index.m3u8').get(getCustomSegmentFileData)
 export default router

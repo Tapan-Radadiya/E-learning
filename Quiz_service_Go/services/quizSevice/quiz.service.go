@@ -3,7 +3,6 @@ package quizsevice
 import (
 	"errors"
 	"fmt"
-	"log"
 	"quiz_service/config"
 	"quiz_service/gRPC/client"
 	"quiz_service/model"
@@ -58,11 +57,12 @@ func (q *QuizService) DeleteQuizService(quizId uuid.UUID) (*model.Quizes, error)
 func (q *QuizService) AddQuizService(quizBody *model.Quizes) (*model.Quizes, error) {
 
 	courseData, err := client.GrpcClient.GetCourseDetails(quizBody.CourseId.String())
+
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	if courseData.Id != quizBody.CourseId.String() {
-		log.Fatal("Mismatch Of CourseId")
+		return nil, errors.New("mismatch Of coursedd")
 	}
 
 	var totalQue int64
@@ -122,5 +122,5 @@ func (q *QuizService) GetUserQuizData(userId uuid.UUID) (*[]QuizAttemptWithDetai
 		return nil, errors.New("error fetching quiz attempts")
 	}
 	fmt.Printf("data %+v", results)
-	return results,nil
+	return results, nil
 }

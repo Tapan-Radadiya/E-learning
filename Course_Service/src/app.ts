@@ -10,17 +10,11 @@ const app = express()
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
-app.use("/stream-data", express.static(HLS_DIR_PATH))
-
-
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*") // watch it
-    res.header(
-        "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content-Type, Accept"
-    );
-    next()
-})
+app.use("/stream-data", cors({
+    origin: "http://localhost:4000",
+    credentials: true,
+    exposedHeaders: ["Content-Range", "Accept-Ranges"],
+}), express.static(HLS_DIR_PATH))
 
 app.use('/course', courseRouter)
 

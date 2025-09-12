@@ -2,7 +2,6 @@ package mcqservice
 
 import (
 	"errors"
-	"log"
 	"quiz_service/config"
 	"quiz_service/gRPC/client"
 	"quiz_service/model"
@@ -11,7 +10,7 @@ import (
 )
 
 type McqServiceInterface interface {
-	AddMcqService(mcqData *model.McqData) (*model.McqData, error)
+	AddMcqService(mcqData *model.McqData) (*model.Mcqs, error)
 	DeleteMcqService(mcqId uuid.UUID) (*model.Mcqs, error)
 	UpdateMcqService(mcqId uuid.UUID, newMcqData model.McqData) (*model.Mcqs, error)
 	GetMcqDetailsService(mcqId uuid.UUID) (*model.Mcqs, error)
@@ -24,7 +23,7 @@ func NewMcqService() McqServiceInterface {
 	return &McqService{}
 }
 
-func (m *McqService) AddMcqService(mcqData *model.McqData) (*model.McqData, error) {
+func (m *McqService) AddMcqService(mcqData *model.McqData) (*model.Mcqs, error) {
 
 	data, err := client.GrpcClient.GetCourseDetails(mcqData.CourseId.String())
 	if err != nil {
@@ -42,8 +41,7 @@ func (m *McqService) AddMcqService(mcqData *model.McqData) (*model.McqData, erro
 		Question: mcqData.Question,
 	}
 	if err := config.DB.Create(&formatedMcqData).Error; err != nil {
-		log.Fatal("Error Creating Mcq")
-		return nil, err
+		return nil, errors.New("error creating mcq")
 	}
 	for i := range *optionsData {
 		(*optionsData)[i].MCQId = formatedMcqData.ID
@@ -52,15 +50,14 @@ func (m *McqService) AddMcqService(mcqData *model.McqData) (*model.McqData, erro
 	if err := config.DB.Create(&optionsData).Error; err != nil {
 		return nil, err
 	}
-	return nil, nil
+	return formatedMcqData, nil
 }
 
 func (m *McqService) DeleteMcqService(mcqId uuid.UUID) (*model.Mcqs, error) {
 	var mcqData *model.Mcqs
 
 	if err := config.DB.Delete(&mcqData, "id = ?", mcqId).Error; err != nil {
-		log.Fatal("Error Deleting Mcq")
-		return nil, err
+		return nil, errors.New("error deleting mcq")
 	}
 	return mcqData, nil
 }

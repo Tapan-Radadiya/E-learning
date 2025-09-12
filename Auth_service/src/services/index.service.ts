@@ -10,7 +10,7 @@ import { pushDataToSQS } from "shared-middleware/dist/utils/comman"
 import speakeasy from "speakeasy"
 import qrcode from "qrcode"
 
-const addUserService = async (userBody: { display_name: string, email: string, password: string, role: Role }): Promise<ApiResultInterface> => {
+const addUserService = async (userBody: { display_name: string, email: string, password: string, user_role: Role }): Promise<ApiResultInterface> => {
     const isUserExist = await user.findOne({ where: { email: userBody.email, display_name: userBody.display_name }, raw: true })
     if (isUserExist) {
         return ApiResult({ message: "User With Email Or Display_Name Already Exists", statusCode: 409 })
@@ -25,7 +25,7 @@ const addUserService = async (userBody: { display_name: string, email: string, p
         display_name: userBody.display_name,
         email: userBody.email,
         password: await hashText(userBody.password),
-        user_role: userBody.role,
+        user_role: userBody.user_role,
         speakeasy_key: secret.base32,
     }, { raw: true })
 
@@ -118,11 +118,16 @@ const reevaluteRefreshToken = async (refreshToken: string): Promise<ApiResultInt
 
             const data: any = await decodeJWT(refreshToken, 'REFRESH')
             const userDetails: any = await user.findOne({ where: { email: data.email }, raw: true })
-
             if (userDetails) {
-                const userRefreshTokensData = await userRefreshTokens.findOne({ where: { user_id: userDetails.id, refresh_token: refreshToken } })
+                const userRefreshTokensData = await userRefreshTokens.findOne({
+                    where: {
+                        user_id: userDetails.
+                            id, refresh_token: refreshToken
+                    }
+                })
+
                 if (userRefreshTokensData?.toJSON()) {
-                    const newAccessToken = await generateAccessToken({ email: userDetails.email, id: userDetails.id, role: userDetails.user_role, mfa: data.mfa })
+                    const newAccessToken = await generateAccessToken({ email: userDetails.email, id: userDetails.id, role: userDetails.user_role, mfa: userDetails.is_mfa_enabled })
                     return ApiResult({ message: "New Access Token Generated", statusCode: 200, data: { accessToken: newAccessToken } })
                 }
             }

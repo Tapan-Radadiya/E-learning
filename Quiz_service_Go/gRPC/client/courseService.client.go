@@ -131,7 +131,6 @@ func (grpcClient *CourseServiceClient) GetCourseDetails(courseId string) (*Cours
 
 	res, err := grpcClient.client.GetCourseData(ctx, req)
 	if err != nil {
-		log.Fatal("(gRPC) Error Fetching CourseData")
 		return nil, err
 	}
 	return res.CourseData, nil
