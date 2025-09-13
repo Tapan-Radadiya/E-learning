@@ -1,14 +1,11 @@
-import { Op, where } from "sequelize"
-import { EMAIL_TYPE, Role, SPEAKEASY_CONFIG, SQS_MESSAGE_GROUP_ID } from "../constants"
+import qrcode from "qrcode"
+import { Op } from "sequelize"
+import speakeasy from "speakeasy"
+import { Role, SPEAKEASY_CONFIG } from "../constants"
+import { ApiResultInterface } from "../interfaces/common.interface"
 import { user } from "../schema/user.schema"
 import { userRefreshTokens } from "../schema/user_refresh_token.schema"
 import { ApiResult, decodeJWT, generateAccessToken, generateRefreshToken, hashText, validateJWT } from "../utils/comman"
-import { ApiResultInterface } from "../interfaces/common.interface"
-import { triggerUserXpEvent } from "../GrpcServices/client/grpc.client"
-import { NEW_USER_EMAIL_TEMPLATE } from "../EmailTemplates/emailTemplates"
-import { pushDataToSQS } from "shared-middleware/dist/utils/comman"
-import speakeasy from "speakeasy"
-import qrcode from "qrcode"
 
 const addUserService = async (userBody: { display_name: string, email: string, password: string, user_role: Role }): Promise<ApiResultInterface> => {
     const isUserExist = await user.findOne({ where: { email: userBody.email, display_name: userBody.display_name }, raw: true })
@@ -29,6 +26,9 @@ const addUserService = async (userBody: { display_name: string, email: string, p
         speakeasy_key: secret.base32,
     }, { raw: true })
 
+    delete userCreate.dataValues.password
+    delete userCreate.dataValues.user_role
+    delete userCreate.dataValues.speakeasy_key
     if (userCreate) {
         const qrCodeUrl = speakeasy.otpauthURL({
             secret: secret.base32,
@@ -50,7 +50,7 @@ const addUserService = async (userBody: { display_name: string, email: string, p
         // }
 
 
-        return ApiResult({ message: "User Created Successfully Scan The QR To Enable MFA", statusCode: 201, data: qrCodeData })
+        return ApiResult({ message: "User Created Successfully Scan The QR To Enable MFA", statusCode: 201, data: { qrCodeData, userData: userCreate.dataValues } })
     } else {
         return ApiResult({ message: "Error Creating User Try After SomeTime", statusCode: 409, err: userCreate })
     }
@@ -180,10 +180,7 @@ const validateValidMFAOtp = (speakeasy_key: string, otp: string): boolean => {
     })
 }
 export {
-    addUserService,
-    loginUserService,
-    reevaluteRefreshToken,
-    getUserProfileService,
-    getUserProfilesGrpcService,
-    enableMFAService
+    addUserService, enableMFAService, getUserProfileService,
+    getUserProfilesGrpcService, loginUserService,
+    reevaluteRefreshToken
 }

@@ -5,10 +5,17 @@
       "outDir": "./dist",
       "strict": true,
       "esModuleInterop": true,
-      "skipLibCheck": true
+      "skipLibCheck": true,
+      "typeRoots": [
+      "./src/types",
+      "./node_modules/@types"
+    ],
+     "types": ["jest"],
     },
     "include": [
-     "src"  ],
+     "src",
+     "**/*.test.ts"
+  ],
     "exclude": [
       "node_modules",
       "dist"

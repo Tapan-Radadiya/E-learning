@@ -14,7 +14,6 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use('/user', userRouter)
 
-
 app.get("/metrics", async (req, res) => {
     res.setHeader("Content-Type", client.register.contentType)
     const metrics = await client.register.metrics()
