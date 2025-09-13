@@ -76,7 +76,7 @@ func (ut *UserTriggerEventsController) GetLeaderboardData(c *fiber.Ctx) error {
 	leaderBoardData, err := ut.userTriggerService.GetLeaderBoardService()
 
 	if err != nil {
-		log.Fatal("Err", err)
+		return err
 	}
 
 	// SSE Events

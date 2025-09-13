@@ -28,8 +28,8 @@ func ConnectDb() {
 	}
 	fmt.Println("(Quiz Service) Postgress DB Connected At 5440")
 	DB.AutoMigrate(
-		&model.McqOptions{},
 		&model.Mcqs{},
+		&model.McqOptions{},
 		&model.QuizAttempts{},
 		&model.QuizScore{},
 		&model.Quizes{},

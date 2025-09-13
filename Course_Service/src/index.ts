@@ -4,14 +4,18 @@ import http, { Server } from "http"
 import "dotenv/config"
 import { detectDeletedKeys, initRedisClient } from "./config/connectRedis.config"
 import { connectGrpc, grpcServer } from "./grpcServices/server/course.grpc"
+import { enablePrometheus } from "./config/enable.prometheus"
 
 const PORT = process.env.PORT || 8080
 
 async function BootStrap() {
     await initRedisClient()
+    // When Any Redis Key Deletes
     await detectDeletedKeys()
     await connectDB()
     await connectGrpc()
+    await enablePrometheus()
+
     const httpServer = http.createServer(app)
 
     httpServer.listen(PORT, () => {

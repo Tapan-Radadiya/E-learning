@@ -3,6 +3,7 @@ import https from "https"
 import { app } from "./app"
 import { connectToDb, db } from "../src/config/index.config"
 import { ConnectGrpc, DisconnectGrpc } from "./GrpcServices/server/enrollment_progress.grpc"
+import { enablePrometheus } from "./config/enable.prometheys"
 
 const PORT = process.env.PORT
 
@@ -11,6 +12,7 @@ const bootstrapHttp = async () => {
 
     await connectToDb()
     await ConnectGrpc()
+    enablePrometheus()
     server.listen(PORT, () => {
         console.log(`🚀 Server Ready With Port ${PORT} At http://localhost:${PORT}`);
     })

@@ -11,7 +11,9 @@ import (
 	"quiz_service/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -21,6 +23,7 @@ func main() {
 	app := fiber.New()
 	app.Use(middleware.AuthincateUser)
 
+	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 	// Routes
 	quizRouterGroup := app.Group("/quiz")
 	quizrouter.RegisterQuizRouter(quizRouterGroup)

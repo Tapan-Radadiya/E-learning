@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -35,10 +34,10 @@ type SQSConfig struct {
 var GLOBAL_SQS_CLIENT SQSConfig
 
 type SQSEmailBody struct {
-	Body      string
+	Body           string
 	EmailType      EmailType
-	Subject   string
-	To  string
+	Subject        string
+	To             string
 	MessageGroupId SQS_Message_Group_Id
 }
 
@@ -92,6 +91,6 @@ func (s *SQSConfig) SendSQSMsg(emailData SQSEmailBody) {
 	_, sqsErr := s.SqsClient.SendMessage(context.TODO(), sendMessageInput)
 
 	if sqsErr != nil {
-		log.Fatalf("failed to send message: %v", sqsErr)
+		fmt.Printf("failed to send message: %v", sqsErr)
 	}
 }

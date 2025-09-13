@@ -13,7 +13,9 @@ import (
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor" // adaptor to wrap net/http handlers
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -21,9 +23,10 @@ func main() {
 	config.ConnectDB()
 
 	// Xp Event Create Group
-
 	app := fiber.New()
 	app.Use(middleware.AuthincateUser)
+	// Prometheus Handler
+	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 
 	appStopSign := make(chan os.Signal, 1)
 	signal.Notify(appStopSign, os.Interrupt, syscall.SIGTERM)

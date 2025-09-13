@@ -2,8 +2,8 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
 	user "progression_service/gRPC"
 	"time"
 
@@ -39,7 +39,7 @@ func (grpcClient *UserGrpcClient) GetUsersProfile(userIds []string) ([]*user.Use
 
 	res, err := grpcClient.client.GetUsersProfile(ctx, req)
 	if err != nil {
-		log.Fatal("GetUsersProfile Service", err)
+		return nil, errors.New("error getting users profile")
 	}
 	return res.Profiles, nil
 }

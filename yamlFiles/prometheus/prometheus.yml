@@ -1,0 +1,34 @@
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+  - job_name: "auth_service"
+    static_configs:
+      - targets: ["192.168.56.1:3000"]
+        labels:
+          service: "auth_service"
+  - job_name: "course_service"
+    static_configs:
+      - targets: ["192.168.56.1:3001"]
+        labels:
+          service: "course_service"
+  - job_name: "enrollment_service"
+    static_configs:
+      - targets: ["192.168.56.1:3002"]
+        labels:
+          service: "enrollment_service"
+  - job_name: "progression_service"
+    static_configs:
+      - targets: ["192.168.56.1:3003"]
+        labels:
+          service: "progression_service"
+  - job_name: "quiz_service"
+    static_configs:
+      - targets: ["192.168.56.1:3004"]
+        labels:
+          service: "quiz_service"
+  - job_name: "aws_sqs_service"
+    static_configs:
+      - targets: ["192.168.56.1:3005"]
+        labels:
+          service: "aws_sqs_service"

@@ -3,12 +3,14 @@ import app from "./app"
 import "dotenv/config"
 import http, { Server } from "http"
 import { connectToGrpc, disconnectToGrpc } from "./GrpcServices/Server/grpc.server"
+import { enablePrometheus } from "./config/enable.prometheus"
 
 const PORT = process.env.PORT || 8080
 
 const bootstrap = async () => {
     await connectDb()
     await connectToGrpc()
+    await enablePrometheus()
     const httpServer = http.createServer(app)
     httpServer.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`)

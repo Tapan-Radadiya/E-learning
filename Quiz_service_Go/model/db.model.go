@@ -36,23 +36,22 @@ type Quizes struct {
 	UpdatedAt     time.Time `json:"updatedat" gorm:"autoUpdateTime:nano:column:updatedat"`
 }
 
+type McqOptions struct {
+	ID         uuid.UUID `json:"id" gorm:"type:uuid;default:uuid_generate_v4();primaryKey:column:id"`
+	OptionText string    `json:"option" gorm:"column:option_text"`
+	MCQId      uuid.UUID `json:"mcqid" gorm:"type:uuid;column:mcq_id;"`
+	IsCorrect  bool      `json:"is_correct" gorm:"column:is_correct"`
+	CreatedAt  time.Time `json:"createdat" gorm:"column:createdat"`
+	UpdatedAt  time.Time `json:"updatedat" gorm:"autoUpdateTime:nano:column:updatedat"`
+}
+
 type Mcqs struct {
 	ID        uuid.UUID    `json:"id" gorm:"type:uuid;default:uuid_generate_v4();primaryKey:column:id;constraint:OnDelete:CASCADE;"`
 	CourseId  uuid.UUID    `json:"course_id" gorm:"type:uuid;column:course_id"`
 	Question  string       `json:"question" gorm:"column:question"`
-	Options   []McqOptions `gorm:"foreignKey:MCQId"`
+	Options   []McqOptions `gorm:"foreignKey:MCQId;constraint:OnDelete:CASCADE"`
 	CreatedAt time.Time    `json:"createdat" gorm:"column:createdat"`
 	UpdatedAt time.Time    `json:"updatedat" gorm:"autoUpdateTime:nano:column:updatedat"`
-}
-
-type McqOptions struct {
-	ID         uuid.UUID `json:"id" gorm:"type:uuid;default:uuid_generate_v4();primaryKey:column:id"`
-	OptionText string    `json:"option" gorm:"column:option_text"`
-	MCQId      uuid.UUID `json:"mcqid" gorm:"type:uuid;column:mcq_id"`
-	Mcq        Mcqs      `json:"-" gorm:"foreignKey:MCQId;references:ID;constraint:OnDelete:CASCADE"`
-	IsCorrect  bool      `json:"is_correct" gorm:"column:is_correct"`
-	CreatedAt  time.Time `json:"createdat" gorm:"column:createdat"`
-	UpdatedAt  time.Time `json:"updatedat" gorm:"autoUpdateTime:nano:column:updatedat"`
 }
 
 type McqData struct {
