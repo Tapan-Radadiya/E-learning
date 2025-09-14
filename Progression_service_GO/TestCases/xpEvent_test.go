@@ -36,6 +36,32 @@ func TestCreateXpEvent(t *testing.T) {
 	testXpEventId = xpEventDataStruct.Data.ID
 }
 
+func TestCreateXpEventWithExistEventName(t *testing.T) {
+	godotenv.Load("../.env")
+	var xpEventData = &model.UserXpEvents{
+		XpEvent:  "TEST",
+		XpPoints: 100,
+	}
+	payload, _ := json.Marshal(xpEventData)
+	req, _ := http.NewRequest(http.MethodPost, "http://localhost:8080/service4/xpevents/create-event", bytes.NewBuffer(payload))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("REFRESH_TOKEN_FOR_TESTCASES")))
+	req.Header.Set("Content-Type", "application/json")
+	callApi(req, t, 409)
+}
+
+func TestCreateXpEventWithUserRole(t *testing.T) {
+	godotenv.Load("../.env")
+	var xpEventData = &model.UserXpEvents{
+		XpEvent:  "TEST",
+		XpPoints: 100,
+	}
+	payload, _ := json.Marshal(xpEventData)
+	req, _ := http.NewRequest(http.MethodPost, "http://localhost:8080/service4/xpevents/create-event", bytes.NewBuffer(payload))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("REFRESH_TOKEN_FOR_TESTCASES_USER")))
+	req.Header.Set("Content-Type", "application/json")
+	callApi(req, t, 401)
+
+}
 func TestGetXpData(t *testing.T) {
 	godotenv.Load("../.env")
 
@@ -55,7 +81,6 @@ func TestTriggerXpEvent(t *testing.T) {
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("REFRESH_TOKEN_FOR_TESTCASES")))
 	req.Header.Set("Content-Type", "application/json")
 	callApi(req, t, 200)
-
 }
 
 func TestDeleteXpEvent(t *testing.T) {
