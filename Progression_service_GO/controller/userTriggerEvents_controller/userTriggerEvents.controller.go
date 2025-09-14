@@ -27,8 +27,12 @@ func NewUserTriggerEventsController(service usertriggereventsservices.UserTrigge
 }
 
 func (ut *UserTriggerEventsController) UserXpTrigger(c *fiber.Ctx) error {
+
+	userId, _ := uuid.Parse(c.Locals("UserId").(string))
+
 	var userXpdata model.UserXpTrigger
 
+	userXpdata.UserId = userId
 	if err := c.BodyParser(&userXpdata); err != nil {
 		return common.Response(c, fiber.StatusConflict, fiber.Map{"message": "Invalid Data In Body"})
 	}
@@ -39,11 +43,11 @@ func (ut *UserTriggerEventsController) UserXpTrigger(c *fiber.Ctx) error {
 		return common.Response(c, fiber.StatusConflict, fiber.Map{"message": "Error Updating Xp Data"})
 	}
 
-	return common.Response(c, fiber.StatusOK, fiber.Map{"message": "Data fetched", "data": updatedUserXp})
+	return common.Response(c, fiber.StatusOK, fiber.Map{"message": "XpAdded", "data": updatedUserXp})
 }
 
 func (ut *UserTriggerEventsController) GetUserXp(c *fiber.Ctx) error {
-	userId, err := uuid.Parse(c.Params("userId"))
+	userId, err := uuid.Parse(c.Locals("UserId").(string))
 	if err != nil {
 		return common.Response(c, fiber.StatusConflict, fiber.Map{"message": "Invalid UserId"})
 	}

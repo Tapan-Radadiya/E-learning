@@ -15,6 +15,6 @@ func RegisterUserXpTriggerRouter(app fiber.Router) {
 
 	app.Get("/leaderboard", userTriggerEvents.GetLeaderboardData)
 
-	app.Get("/user-xp-data/:userId", userTriggerEvents.GetUserXp)
+	app.Get("/user-xp-data", userTriggerEvents.GetUserXp)
 
 }

@@ -16,5 +16,6 @@ const zodUserLoginValidation = z.object({
 const zodUserMFAEnableValidation = z.object({
     token: z.string(),
     email: z.string().email(),
+    password: z.string().min(8).max(50),
 })
 export { zodUserCreateValidation, zodUserLoginValidation, zodUserMFAEnableValidation }

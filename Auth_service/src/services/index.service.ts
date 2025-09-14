@@ -1,11 +1,14 @@
 import qrcode from "qrcode"
 import { Op } from "sequelize"
 import speakeasy from "speakeasy"
-import { Role, SPEAKEASY_CONFIG } from "../constants"
+import { EMAIL_TYPE, Role, SPEAKEASY_CONFIG, SQS_MESSAGE_GROUP_ID } from "../constants"
 import { ApiResultInterface } from "../interfaces/common.interface"
 import { user } from "../schema/user.schema"
 import { userRefreshTokens } from "../schema/user_refresh_token.schema"
-import { ApiResult, decodeJWT, generateAccessToken, generateRefreshToken, hashText, validateJWT } from "../utils/comman"
+import { ApiResult, compareText, decodeJWT, generateAccessToken, generateRefreshToken, hashText, validateJWT } from "../utils/comman"
+import { triggerUserXpEvent } from "../GrpcServices/client/grpc.client"
+import { pushDataToSQS } from "shared-middleware/dist/utils/comman"
+import { NEW_USER_EMAIL_TEMPLATE } from "../EmailTemplates/emailTemplates"
 
 const addUserService = async (userBody: { display_name: string, email: string, password: string, user_role: Role }): Promise<ApiResultInterface> => {
     const isUserExist = await user.findOne({ where: { email: userBody.email, display_name: userBody.display_name }, raw: true })
@@ -38,16 +41,16 @@ const addUserService = async (userBody: { display_name: string, email: string, p
         })
         const qrCodeData = await qrcode.toDataURL(qrCodeUrl)
 
-        // const data: any = await triggerUserXpEvent({ xpEvent: "NEW_REGISTER", userId: userCreate.toJSON().id })
-        // if (data) {
-        //     await pushDataToSQS({
-        //         to: userBody.email,
-        //         body: NEW_USER_EMAIL_TEMPLATE(userBody.display_name, data.xp_point as number),
-        //         subject: "Welcome Message",
-        //         emailType: EMAIL_TYPE.USER_CREATION,
-        //         messageGroupId: SQS_MESSAGE_GROUP_ID.Email_Sending
-        //     })
-        // }
+        const data: any = await triggerUserXpEvent({ xpEvent: "NEW_REGISTER", userId: userCreate.toJSON().id })
+        if (data) {
+            await pushDataToSQS({
+                to: userBody.email,
+                body: NEW_USER_EMAIL_TEMPLATE(userBody.display_name, data.xp_point as number),
+                subject: "Welcome Message",
+                emailType: EMAIL_TYPE.USER_CREATION,
+                messageGroupId: SQS_MESSAGE_GROUP_ID.Email_Sending
+            })
+        }
 
 
         return ApiResult({ message: "User Created Successfully Scan The QR To Enable MFA", statusCode: 201, data: { qrCodeData, userData: userCreate.dataValues } })
@@ -57,7 +60,7 @@ const addUserService = async (userBody: { display_name: string, email: string, p
 }
 
 
-const enableMFAService = async (body: { userEmailId: string, otp: string }): Promise<ApiResultInterface> => {
+const enableMFAService = async (body: { userEmailId: string, password: string, otp: string }): Promise<ApiResultInterface> => {
     const validateLogin: any = await user.findOne({ where: { email: body.userEmailId }, raw: true })
 
     if (!validateLogin) {
@@ -67,43 +70,52 @@ const enableMFAService = async (body: { userEmailId: string, otp: string }): Pro
         return ApiResult({ message: "MultiFactor Authentication Is Already Enabled", statusCode: 404 })
     }
 
+    if (await !compareText(body.password, validateLogin.password)) {
+        return ApiResult({ message: "Invalid credentials", statusCode: 403 })
+    }
+
     const verify = validateValidMFAOtp(validateLogin.speakeasy_key, body.otp)
 
     if (verify) {
         await user.update({ is_mfa_enabled: true }, { where: { email: body.userEmailId } })
         return ApiResult({ message: "Multi Factor Authentication Is Enabled Please Login", statusCode: 200 })
     } else {
-        return ApiResult({ message: "Error Eanbling Multi Factor Authentication Please Try After SomeTime", statusCode: 409 })
+        return ApiResult({ message: "Invalid MFA Code Or Error Eanbling Multi Factor Authentication Please Try After SomeTime", statusCode: 409 })
     }
 
 }
 
 const loginUserService = async (userLoginBody: { email: string, password: string, otp: string }): Promise<ApiResultInterface> => {
-    const validateLogin: any = await user.findOne({ where: { email: userLoginBody.email }, raw: true })
+    const validateLogin = await user.findOne({ where: { email: userLoginBody.email } })
 
     if (!validateLogin) {
         return ApiResult({ message: "Unable To Found User", statusCode: 404 })
     }
 
-    if (!validateLogin.is_mfa_enabled) {
+    if (!validateLogin.dataValues.is_mfa_enabled) {
         return ApiResult({ message: "Please Enable MFA", statusCode: 404 })
     }
 
-    const mfaVarification = validateValidMFAOtp(validateLogin.speakeasy_key, userLoginBody.otp)
+    if (await !compareText(userLoginBody.password, validateLogin.dataValues.data)) {
+        return ApiResult({ message: "Invalid credentials", statusCode: 403 })
+    }
+
+    const mfaVarification = validateValidMFAOtp(validateLogin.dataValues.speakeasy_key, userLoginBody.otp)
 
     if (!mfaVarification) {
         return ApiResult({ message: "Invalid MFA Code", statusCode: 403 })
     }
 
     const accessToken = await generateAccessToken({
-        id: validateLogin.id,
-        email: validateLogin.email,
-        role: validateLogin.user_role,
+        id: validateLogin.dataValues.id,
+        email: validateLogin.dataValues.email,
+        role: validateLogin.dataValues.user_role,
         mfa: true
     })
-    const refreshToken = await generateRefreshToken({ email: validateLogin.email })
-    const addUserRefreshToken = await userRefreshTokens.upsert({
-        user_id: validateLogin.id,
+    const refreshToken = await generateRefreshToken({ email: validateLogin.dataValues.email })
+
+    await userRefreshTokens.upsert({
+        user_id: validateLogin.dataValues.id,
         refresh_token: refreshToken
     }, {})
     return ApiResult({ message: "User Logged In Successfully", statusCode: 200, data: { accessToken, refreshToken } })

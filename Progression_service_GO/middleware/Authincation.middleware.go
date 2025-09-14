@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"progression_service/common"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -27,8 +29,12 @@ func AuthincateUser(c *fiber.Ctx) error {
 	emailId := c.Get("x-user-email")
 	role := c.Get("x-user-role")
 
-	c.Locals("Email", emailId)
-	c.Locals("UserId", userId)
-	c.Locals("Role", role)
-	return c.Next()
+	if userId != "" && emailId != "" && role != "" {
+		c.Locals("Email", emailId)
+		c.Locals("UserId", userId)
+		c.Locals("Role", role)
+		return c.Next()
+	} else {
+		return common.Response(c, fiber.StatusUnauthorized, fiber.Map{"message": "Unauthorized User Or Token Expired"})
+	}
 }

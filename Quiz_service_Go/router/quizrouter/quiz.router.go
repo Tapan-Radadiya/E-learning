@@ -1,7 +1,9 @@
 package quizrouter
 
 import (
+	"quiz_service/constants"
 	quizcontroller "quiz_service/controller/quizController"
+	"quiz_service/middleware"
 	quizsevice "quiz_service/services/quizSevice"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,7 +16,7 @@ func RegisterQuizRouter(app fiber.Router) {
 
 	app.Get("/quiz-attempts", quizService.GetUserQuizAttempts)
 	app.Get("/:quizId", quizService.GetQuizData)
-	app.Post("/add", quizService.AddQuiz)
-	app.Patch("/", quizService.UpdateQuiz)
-	app.Delete("/:quizId", quizService.DeleteQuiz)
+	app.Post("/add", middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), quizService.AddQuiz)
+	app.Patch("/", middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), quizService.UpdateQuiz)
+	app.Delete("/:quizId", middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), quizService.DeleteQuiz)
 }

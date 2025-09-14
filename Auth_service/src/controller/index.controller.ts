@@ -48,7 +48,8 @@ const enableMFA = async (req: Request, res: Response) => {
     try {
         const reqBodyData = {
             userEmailId: req.body.email,
-            otp: req.body.otp
+            otp: req.body.otp,
+            password: req.body.password
         }
         const data = await enableMFAService(reqBodyData)
         res.status(data.statusCode!).json(ApiResult({ message: data.message, data: data.data ?? {} }))

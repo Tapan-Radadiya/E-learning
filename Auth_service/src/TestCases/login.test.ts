@@ -3,7 +3,7 @@ import { Role } from "../constants"
 
 describe('Register User', () => {
     let userId: string
-    test('Register User', async () => {
+    it('Should register user', async () => {
         const data = await addUserService({
             display_name: "Tapan",
             email: "champakgada163@gmai.com",
@@ -14,12 +14,12 @@ describe('Register User', () => {
         expect(data.statusCode).toBe(201)
     });
 
-    test('Get registerd user data', async () => {
+    it('Should get registerd user data', async () => {
         const data = await getUserProfileService(userId)
         expect(data.statusCode).toBe(200)
     })
 
-    test('Register User With Same Email', async () => {
+    it('Should not allow to regisetr user with aleready existing email', async () => {
         const data = await addUserService({
             display_name: "Tapan",
             email: "champakgada163@gmai.com",

@@ -16,6 +16,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+type USERROLES string
+
+const (
+	ADMIN USERROLES = "ADMIN"
+	USER  USERROLES = "USER"
+)
+
 func main() {
 	godotenv.Load()
 	config.ConnectDb()
