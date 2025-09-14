@@ -24,9 +24,9 @@ func main() {
 
 	// Xp Event Create Group
 	app := fiber.New()
+	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 	app.Use(middleware.AuthincateUser)
 	// Prometheus Handler
-	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 
 	appStopSign := make(chan os.Signal, 1)
 	signal.Notify(appStopSign, os.Interrupt, syscall.SIGTERM)
