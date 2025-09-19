@@ -15,8 +15,8 @@ build/
 out/
 
 # Environment files
-.env
-.env.*      # e.g., .env.dev, .env.local
+# .env
+# .env.*      # e.g., .env.dev, .env.local
 
 # ----------------------
 # Go
@@ -54,3 +54,5 @@ uploads/
 temp_uploads/
 
 HLS_DIR
+
+*.exe

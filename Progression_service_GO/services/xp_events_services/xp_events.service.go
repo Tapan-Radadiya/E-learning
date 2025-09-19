@@ -2,6 +2,7 @@ package xpeventsservices
 
 import (
 	"errors"
+	"fmt"
 	"progression_service/config"
 	"progression_service/model"
 	"strings"
@@ -24,7 +25,7 @@ func NewXpEventsService() XPEventsServiceInterface {
 }
 
 func (xpE *XpEventsService) AddEventService(xpEventData *model.UserXpEvents) (*model.UserXpEvents, error) {
-
+	fmt.Println("xpEventData", xpEventData)
 	if strings.Contains(xpEventData.XpEvent, " ") {
 		return nil, errors.New("xp events should not contains whiteSpaces")
 	}

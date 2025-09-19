@@ -2,7 +2,7 @@ import { UUID } from "crypto"
 import { ApiResult, ApiResultInterface } from "../comman"
 import { getCourseModuleGRPCService, getCourseDataGRPCService, fetchUserXp, getUsersDataGRPCService, fetchXpEventData, triggerUserXpEvent } from "../GrpcServices/client/courseService.grpc"
 import { course_progresses } from "../schema/courseProgress.schema"
-import { EMAIL_TYPE, pushDataToSQS, SQS_MESSAGE_GROUP_ID } from "shared-middleware/src/utils/comman"
+import { EMAIL_TYPE, pushDataToSQS, SQS_MESSAGE_GROUP_ID } from "shared-middleware/dist/utils/comman"
 import { COURSE_COMPLETION_TEMPLATE } from "../EmailTemplates/emailTemplates"
 
 const courseProgressService = async (moduleId: string, userId: string): Promise<ApiResultInterface> => {

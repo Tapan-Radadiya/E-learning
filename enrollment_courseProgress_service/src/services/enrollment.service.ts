@@ -2,9 +2,8 @@ import { ApiResult, ApiResultInterface } from "../comman";
 import { user_enrollments } from "../schema/enrollment.schema"
 import { course_progresses } from "../schema/courseProgress.schema"
 import { CourseDataInterface, fetchUserXp, fetchXpEventData, getCourseDataGRPCService, getUsersDataGRPCService, triggerUserXpEvent } from "../GrpcServices/client/courseService.grpc";
-import { EMAIL_TYPE, pushDataToSQS, SQS_MESSAGE_GROUP_ID } from "shared-middleware/src/utils/comman"
+import { EMAIL_TYPE, pushDataToSQS, SQS_MESSAGE_GROUP_ID } from "shared-middleware/dist/utils/comman"
 import { COURSE_ENROLLMENT_TEMPLATE, ENROLLMENT_FAILED, FIRST_ENROLLMENT_TEMPLATE } from "../EmailTemplates/emailTemplates";
-import sequelize from "sequelize";
 import { db } from "../config/index.config";
 
 const enrollUserService = async (courseData: CourseDataInterface, user_id: string): Promise<ApiResultInterface> => {
