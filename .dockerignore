@@ -1,0 +1,12 @@
+*/node_modules
+**/node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+README.md
+.dockerignore
+Auth_service/node_modules
+Course_Service/node_modules
+enrollment_courseProgress_service/node_modules
+shared-middleware/node_modules

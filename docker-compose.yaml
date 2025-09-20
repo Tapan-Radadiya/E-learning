@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+
+  auth_service:
+    build:
+      context: .
+      dockerfile: ./Auth_service/dockerfile
+    container_name: auth_service_e_learning
+    ports:
+      - "3000:3000"
+      - "50052:50052"
+    env_file:
+      - ./Auth_service/.env
+    networks:
+      - elearning_network
+  
+  progression_service:
+    build:
+      context: .
+      dockerfile: ./Progression_service_GO/dockerfile
+    container_name: progression_service_e_learning
+    ports:
+      - "3003:3003"
+      - "50053:50053"
+    env_file:
+      - ./Progression_service_GO/.env
+    networks:
+      - elearning_network
+
+networks:
+  elearning_network:
+    driver: bridge

@@ -1,0 +1,22 @@
+# Ignore version control
+.git
+.gitignore
+
+# Ignore local builds
+bin/
+build/
+dist/
+*.out
+*.exe
+*.test
+
+# Ignore dependencies from other services
+node_modules/
+
+# Ignore IDE/editor
+.vscode/
+.idea/
+
+# # Ignore secrets
+# .env
+# *.env

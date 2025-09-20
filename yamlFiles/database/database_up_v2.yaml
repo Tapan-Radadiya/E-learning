@@ -12,10 +12,11 @@ services:
     ports:
       - "5440:5432"
     networks:
-      - e_learning_database_network_v2
+      - elearning_network
 
 volumes:
   postgres_data:
 
 networks:
-  e_learning_database_network_v2:
+  elearning_network:
+    external: true
