@@ -8,6 +8,8 @@ services:
     container_name: api-gateway-nginx
     ports:
       - "8080:80"
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - "./nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro"
       - "./conf.d:/etc/nginx/conf.d:ro"

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 	"quiz_service/config"
 	"quiz_service/gRPC/client"
 	"quiz_service/middleware"
@@ -53,5 +55,5 @@ func main() {
 	// Initialize All Grpc Client Service Needed
 	client.InitAllGrpcClient()
 
-	log.Fatal(app.Listen(":3004"))
+	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("PORT"))))
 }

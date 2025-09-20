@@ -50,7 +50,7 @@ func main() {
 	app.All("*", func(c *fiber.Ctx) error {
 		return c.SendString("Ahh! invalid Route")
 	})
-	log.Fatal(app.Listen(":3003"))
+	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("PORT"))))
 
 	<-appStopSign
 	fmt.Println("Shutting Down Grpc Server")

@@ -3,7 +3,7 @@ require("resty.core")
 ngx.log(ngx.OK, "Starting Lua Script")
 local cjson = require "cjson"
 local jwt = require "resty.jwt"
-local jwt_secret = "363dc8567faa897eb0fdef041f4997e0"
+local jwt_secret = os.getenv("JWT_SECRET")
 
 local auth_header = ngx.var.http_Authorization
 

@@ -4,6 +4,7 @@ import (
 	awssqs "AWS_Sns_Go/AWS_Sqs"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -38,6 +39,7 @@ func main() {
 	time.Sleep(2 * time.Second)
 	go sqsCfg.ReceiveSQSMsg()
 
-	log.Fatal(app.Listen(":3005"))
+	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("PORT"))))
+
 	fmt.Println("Server Listing On 3005 . . .")
 }
