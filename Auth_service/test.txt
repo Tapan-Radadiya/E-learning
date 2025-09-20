@@ -17,3 +17,17 @@ npm config delete strict-ssl
 pnpm config delete registry
 pnpm config delete strict-ssl
 unset NODE_TLS_REJECT_UNAUTHORIZED
+
+--------------------
+PORT=3000
+# POSTGRESS_CONN_URL=postgresql://JarvisDB:JarvisDB@localhost:5433/jarvis_db
+POSTGRESS_CONN_URL=postgresql://tapan:tapan_Taps@localhost:5440/jarvis_db
+JWT_ACCESS_KEY_SECRET=363dc8567faa897eb0fdef041f4997e0
+JWT_REFRESH_KEY_SECRET=4ab5dd41f3a54066f298f48b32255517
+JWT_ACCESS_KEY_TTL=15m
+JWT_REFRESH_KEY_TTL=1d
+
+AWS_REGION=ap-south-1
+AWS_SQS_QUERY_URL=https://sqs.ap-south-1.amazonaws.com/315337116328/ELearning_Email_Queue.fifo
+AWS_ACCESS_KEY_ID=AKIAUS24ORKUGOX4UMHK
+AWS_SECRET_KEY_ID=vLSkShR863KzNFjpBIL3QKt3u5u+P+sBqTubfuF2
