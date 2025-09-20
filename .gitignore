@@ -16,7 +16,8 @@ out/
 
 # Environment files
 .env
-.env.*      # e.g., .env.dev, .env.local
+.env.*   
+# e.g., .env.dev, .env.local
 
 # ----------------------
 # Go
