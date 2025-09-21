@@ -1,17 +1,41 @@
-FROM node:20-alpine
+FROM node:20-alpine AS base
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY enrollment_courseProgress_service/package.json ./enrollment_courseProgress_service
-# COPY shared-middleware/package.json ./shared-middleware
+RUN npm i -g pnpm 
+RUN pnpm i -g ts-node
 
-RUN npm i -g pnpm && pnpm install --filter enrollment_courseProgress_service
+ENV PNPM_HOME="/root/.pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY enrollment_courseProgress_service/package.json ./enrollment_courseProgress_service/package.json
+COPY shared-middleware/package.json ./shared-middleware/package.json
+
+RUN pnpm install --filter enrollment_course_progress_service...
+
+FROM base AS build
+
+WORKDIR /app
 
 COPY enrollment_courseProgress_service ./enrollment_courseProgress_service
 
 COPY shared-middleware ./shared-middleware
 
+RUN pnpm --filter shared-middleware build && pnpm --filter enrollment_courseProgress_service build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+RUN npm i -g pnpm
+
+RUN pnpm install --filter enrollment_courseProgress_service... --prod
+
+COPY --from=build /app/enrollment_courseProgress_service ./enrollment_courseProgress_service
+COPY --from=build /app/shared-middleware ./shared-middleware
+
+
 WORKDIR /app/enrollment_courseProgress_service
 
-CMD [ "pnpm", "start" ]
+
+CMD [ "pnpm", "start" ] 

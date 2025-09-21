@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon --exec ts-node src/index.ts",
-    "build": "tsc ; copy .\\src\\proto_files dist -r",
+    "build": "tsc ; cp ./src/proto_files dist -r",
     "create-migrate": "ts-node src/scripts/create_migration_file.scripts.ts",
     "db:migrate": "pnpm sequelize-cli db:migrate",
     "test": "jest",

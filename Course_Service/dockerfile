@@ -1,17 +1,41 @@
-FROM node:20-alpine
+FROM node:20-alpine AS base
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY Course_Service/package.json ./Course_Service
-# COPY shared-middleware/package.json ./shared-middleware
+RUN npm i -g pnpm 
+RUN pnpm i -g ts-node
 
-RUN npm i -g pnpm && pnpm install --filter course_service
+ENV PNPM_HOME="/root/.pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY Course_Service/package.json ./Course_Service/package.json
+COPY shared-middleware/package.json ./shared-middleware/package.json
+
+RUN pnpm install --filter course_service...
+
+FROM base AS build
+
+WORKDIR /app
 
 COPY Course_Service ./Course_Service
 
 COPY shared-middleware ./shared-middleware
 
+RUN pnpm --filter shared-middleware build && pnpm --filter Course_Service build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+RUN npm i -g pnpm
+
+RUN pnpm install --filter Course_Service... --prod
+
+COPY --from=build /app/Course_Service ./Course_Service
+COPY --from=build /app/shared-middleware ./shared-middleware
+
+
 WORKDIR /app/Course_Service
 
-CMD [ "pnpm", "start" ]
+
+CMD [ "pnpm", "start" ] 
