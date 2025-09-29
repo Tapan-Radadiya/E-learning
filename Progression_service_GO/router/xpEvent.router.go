@@ -15,9 +15,9 @@ func RegisterXpEventRouter(app fiber.Router) {
 
 	app.Get("/:eventId", xpEventService.GetEventDetail)
 
-	app.Post("/create-event", middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), xpEventService.AddEvent)
+	app.Post("/create-event", middleware.AuthincateUser, middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), xpEventService.AddEvent)
 
-	app.Put("/update-event/:eventId", middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), xpEventService.UpdateEvent)
+	app.Put("/update-event/:eventId", middleware.AuthincateUser, middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), xpEventService.UpdateEvent)
 
-	app.Delete("/:eventId", middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), xpEventService.RemoveEvent)
+	app.Delete("/:eventId", middleware.AuthincateUser, middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), xpEventService.RemoveEvent)
 }

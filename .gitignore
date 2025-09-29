@@ -57,3 +57,5 @@ temp_uploads/
 HLS_DIR
 
 *.exe
+tmp
+*.txt

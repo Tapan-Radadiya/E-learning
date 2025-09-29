@@ -8,7 +8,6 @@ import (
 	"progression_service/config"
 	"progression_service/gRPC/client"
 	grpcServer "progression_service/gRPC/server"
-	"progression_service/middleware"
 	"progression_service/router"
 	"syscall"
 
@@ -25,7 +24,7 @@ func main() {
 	// Xp Event Create Group
 	app := fiber.New()
 	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
-	app.Use(middleware.AuthincateUser)
+	// app.Use(middleware.AuthincateUser)
 	// Prometheus Handler
 
 	appStopSign := make(chan os.Signal, 1)

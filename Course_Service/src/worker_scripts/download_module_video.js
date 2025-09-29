@@ -51,11 +51,13 @@ worker_threads_1.parentPort === null || worker_threads_1.parentPort === void 0 ?
                 _b.trys.push([1, 7, , 8]);
                 redisClient = (0, connectRedis_config_1.getRedisClient)();
                 _a = message.data, oldFilePath = _a.oldFilePath, newFilePath = _a.newFilePath, moduleId = _a.moduleId, course_id = _a.course_id, mimeType = _a.mimeType, fileName = _a.fileName;
-                readStream = fs.createReadStream(oldFilePath);
+                console.log('message.data->', message.data);
                 return [4 /*yield*/, uploadToLocal(oldFilePath, newFilePath)];
             case 2:
                 _b.sent();
+                readStream = fs.createReadStream(newFilePath);
                 s3FileName = "moduleVideo/".concat(course_id, "/").concat(Date.now(), " - ").concat(fileName !== null && fileName !== void 0 ? fileName : '');
+                console.log('s3FileName->', s3FileName);
                 return [4 /*yield*/, (0, awsS3_utils_1.UploadFileToS3)({
                         key: s3FileName,
                         body: readStream,
@@ -63,6 +65,7 @@ worker_threads_1.parentPort === null || worker_threads_1.parentPort === void 0 ?
                     })];
             case 3:
                 _b.sent();
+                console.log('Uploaded To S3');
                 return [4 /*yield*/, (redisClient === null || redisClient === void 0 ? void 0 : redisClient.hset("module-".concat(moduleId), "s3VideoUrl", s3FileName))];
             case 4:
                 _b.sent();
@@ -77,7 +80,7 @@ worker_threads_1.parentPort === null || worker_threads_1.parentPort === void 0 ?
                 return [3 /*break*/, 8];
             case 7:
                 error_1 = _b.sent();
-                console.log('error-->', error_1);
+                // console.log('error-->', error);
                 worker_threads_1.parentPort === null || worker_threads_1.parentPort === void 0 ? void 0 : worker_threads_1.parentPort.postMessage("ERROR_COMPLETING_PROCESS");
                 return [3 /*break*/, 8];
             case 8: return [2 /*return*/];

@@ -111,7 +111,7 @@ const getCourseEnrollmentDetails = async (courseId: string): Promise<ApiResultIn
     const data = await user_enrollments.findAll({ where: { course_id: courseId }, attributes: ['user_id'], raw: true })
     const userIds = data.map((ele: any) => ele.user_id)
     if (userIds.length === 0) {
-        return ApiResult({ statusCode: 409, message: "No user is enrolled" })
+        return ApiResult({ statusCode: 200, message: "No user is enrolled" })
     }
 
     const userProfile = await getUsersDataGRPCService(userIds)

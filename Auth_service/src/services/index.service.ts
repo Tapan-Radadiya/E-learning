@@ -10,7 +10,7 @@ import { triggerUserXpEvent } from "../GrpcServices/client/grpc.client"
 import { pushDataToSQS } from "shared-middleware/dist/utils/comman"
 import { NEW_USER_EMAIL_TEMPLATE } from "../EmailTemplates/emailTemplates"
 
-const addUserService = async (userBody: { display_name: string, email: string, password: string, user_role: Role }): Promise<ApiResultInterface> => {
+const addUserService = async (userBody: { display_name: string, email: string, password: string, role: Role }): Promise<ApiResultInterface> => {
     const isUserExist = await user.findOne({ where: { email: userBody.email, display_name: userBody.display_name }, raw: true })
     if (isUserExist) {
         return ApiResult({ message: "User With Email Or Display_Name Already Exists", statusCode: 409 })
@@ -25,7 +25,7 @@ const addUserService = async (userBody: { display_name: string, email: string, p
         display_name: userBody.display_name,
         email: userBody.email,
         password: await hashText(userBody.password),
-        user_role: userBody.user_role,
+        user_role: userBody.role,
         speakeasy_key: secret.base32,
     }, { raw: true })
 

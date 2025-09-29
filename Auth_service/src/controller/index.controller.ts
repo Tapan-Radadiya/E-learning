@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { ApiResult, validateWithZod } from "../utils/comman"
 import { zodUserCreateValidation, zodUserLoginValidation, zodUserMFAEnableValidation } from "../ZodValidations/user.validation"
 import {
@@ -8,6 +8,7 @@ import {
     reevaluteRefreshToken,
     enableMFAService
 } from "../services/index.service"
+import passport from "passport";
 
 const createUserController = async (req: Request, res: Response) => {
     if (!req.body) {
@@ -110,6 +111,7 @@ const refreshTokenData = async (req: Request, res: Response) => {
 
 const getUserProfile = async (req: Request, res: Response) => {
     try {
+        // @ts-ignore
         const data = await getUserProfileService(req.user.id)
         res.status(data.statusCode!).json(data)
         return

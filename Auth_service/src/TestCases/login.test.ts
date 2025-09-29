@@ -8,7 +8,7 @@ describe('Register User', () => {
             display_name: "Tapan",
             email: "champakgada163@gmai.com",
             password: "EE_Jethyaa",
-            user_role: Role.USER
+            role: Role.USER
         })
         userId = data.data.userData.id as string
         expect(data.statusCode).toBe(201)
@@ -24,7 +24,7 @@ describe('Register User', () => {
             display_name: "Tapan",
             email: "champakgada163@gmai.com",
             password: "EE_Jethyaa",
-            user_role: Role.USER
+            role: Role.USER
         })
         expect(data.statusCode).toBe(409)
     });

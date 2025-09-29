@@ -24,7 +24,7 @@ const createCourseService = async (req: Request) => {
         }
     } catch (error: any) {
         console.log('error->', error)
-        return ApiResult({ message: "Internal Server Error", err: error })
+        return ApiResult({ message: "Internal Server Error", err: error, statusCode: 500 })
     }
 }
 

@@ -4,22 +4,22 @@ global:
 scrape_configs:
   - job_name: "auth_service"
     static_configs:
-      - targets: ["192.168.56.1:3000"]
+      - targets: ["192.168.103.141:3000"]
         labels:
           service: "auth_service"
   - job_name: "course_service"
     static_configs:
-      - targets: ["192.168.56.1:3001"]
+      - targets: ["192.168.103.141:3001"]
         labels:
           service: "course_service"
   - job_name: "enrollment_service"
     static_configs:
-      - targets: ["192.168.56.1:3002"]
+      - targets: ["192.168.103.141:3002"]
         labels:
           service: "enrollment_service"
   - job_name: "progression_service"
     static_configs:
-      - targets: ["192.168.56.1:3003"]
+      - targets: ["192.168.103.141:3003"]
         labels:
           service: "progression_service"
   - job_name: "quiz_service"

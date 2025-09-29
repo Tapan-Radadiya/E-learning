@@ -49,10 +49,13 @@ var s3 = new client_s3_1.S3Client({
 });
 function UploadFileToS3(uploadParams) {
     return __awaiter(this, void 0, void 0, function () {
-        var readAbleBuffer, data;
+        var readAbleBuffer, data, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, consumers_1.buffer)(uploadParams.body)];
+                case 0:
+                    _a.trys.push([0, 3, , 4]);
+                    console.log('uploadParams->', typeof uploadParams);
+                    return [4 /*yield*/, (0, consumers_1.buffer)(uploadParams.body)];
                 case 1:
                     readAbleBuffer = _a.sent();
                     return [4 /*yield*/, s3.send(new client_s3_1.PutObjectCommand({
@@ -69,7 +72,12 @@ function UploadFileToS3(uploadParams) {
                     else {
                         return [2 /*return*/, false];
                     }
-                    return [2 /*return*/];
+                    return [3 /*break*/, 4];
+                case 3:
+                    error_1 = _a.sent();
+                    console.log('error->', error_1);
+                    return [2 /*return*/, false];
+                case 4: return [2 /*return*/];
             }
         });
     });

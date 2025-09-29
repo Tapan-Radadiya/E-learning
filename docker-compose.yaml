@@ -9,25 +9,75 @@ services:
     container_name: auth_service_e_learning
     ports:
       - "3000:3000"
-      - "50052:50052"
+      - "50052"
     env_file:
       - ./Auth_service/.env
     networks:
       - elearning_network
   
-  # progression_service:
-  #   build:
-  #     context: .
-  #     dockerfile: ./Progression_service_GO/dockerfile
-  #   container_name: progression_service_e_learning
-  #   ports:
-  #     - "3003:3003"
-  #     - "50053:50053"
-  #   env_file:
-  #     - ./Progression_service_GO/.env
-  #   networks:
-  #     - elearning_network
+  course_service:
+    build:
+      context: .
+      dockerfile: ./Course_Service/dockerfile
+    container_name: course_service_e_learning
+    ports:
+      - "3001:3001"
+      - "50051"
+    env_file:
+      - ./Course_Service/.env
+    networks:
+      - elearning_network
+  
+  enrollment_progression_service:
+    build:
+      context: .
+      dockerfile: ./enrollment_courseProgress_service/dockerfile
+    container_name: enrollment_course_progress_service_e_learning
+    ports:
+      - "3002:3002"
+      - "50054"
+    env_file:
+      - ./enrollment_courseProgress_service/.env
+    networks:
+      - elearning_network
+  
+  progression_service:
+    build:
+      context: ./Progression_service_GO
+      dockerfile: dockerfile
+    container_name: progression_service_e_learning
+    ports:
+      - "3003:3003"
+      - "50053"
+    env_file:
+      - ./Progression_service_GO/.env
+    networks:
+      - elearning_network
+
+  quiz_service:
+    build:
+      context: ./Quiz_service_Go
+      dockerfile: dockerfile
+    container_name: quiz_service_e_learning
+    ports:
+      - "3004:3004"
+    env_file:
+      - ./Quiz_service_Go/.env
+    networks:
+      - elearning_network
+  
+  aws_sns:
+    build:
+      context: ./AWS_Sns_GO
+      dockerfile: dockerfile
+    container_name: aws_sns_e_learning
+    ports:
+      - "3005:3005"
+    env_file:
+      - ./AWS_Sns_GO/.env
+    networks:
+      - elearning_network
 
 networks:
   elearning_network:
-    driver: bridge
+    external: true

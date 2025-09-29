@@ -53,7 +53,7 @@ func (xpE *XpEventsService) RemoveEventService(xpEventId uuid.UUID) (*model.User
 
 func (xpE *XpEventsService) UpdateEventService(newXpEventData *model.UserXpEvents, xpEventId uuid.UUID) (*model.UserXpEvents, error) {
 	var xpEvent model.UserXpEvents
-	if err := config.DB.First(xpEvent, "id = ?", xpEventId).Error; err != nil {
+	if err := config.DB.First(&xpEvent, "id = ?", xpEventId).Error; err != nil {
 		return nil, err
 	}
 

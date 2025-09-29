@@ -20,7 +20,6 @@ const enrollmentServiceImpl = {
         call: grpc.ServerUnaryCall<any, any>,
         callback: grpc.sendUnaryData<any>
     ) => {
-        console.log('courseId-->', call.request);
         const courseId = call.request.courseId
         const userId = call.request.userId
         if (!courseId || !userId) {

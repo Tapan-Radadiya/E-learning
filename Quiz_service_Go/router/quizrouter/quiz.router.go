@@ -17,6 +17,6 @@ func RegisterQuizRouter(app fiber.Router) {
 	app.Get("/quiz-attempts", quizService.GetUserQuizAttempts)
 	app.Get("/:quizId", quizService.GetQuizData)
 	app.Post("/add", middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), quizService.AddQuiz)
-	app.Patch("/", middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), quizService.UpdateQuiz)
+	app.Patch("/:quizId", middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), quizService.UpdateQuiz)
 	app.Delete("/:quizId", middleware.AuthorizeUser([]constants.USERROLES{constants.ADMIN}), quizService.DeleteQuiz)
 }

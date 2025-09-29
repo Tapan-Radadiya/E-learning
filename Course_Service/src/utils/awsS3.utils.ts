@@ -12,17 +12,22 @@ const s3 = new S3Client({
 })
 
 export async function UploadFileToS3(uploadParams: { key: string, body: Readable, contentType: string }): Promise<boolean> {
-    const readAbleBuffer = await buffer(uploadParams.body)
-    const data = await s3.send(new PutObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET_NAME!,
-        Key: uploadParams.key,
-        Body: readAbleBuffer,
-        ContentType: uploadParams.contentType,
-    }))
-    if (data.$metadata.httpStatusCode === 200) {
-        return true
-    }
-    else {
+    try {
+        const readAbleBuffer = await buffer(uploadParams.body)
+        const data = await s3.send(new PutObjectCommand({
+            Bucket: process.env.AWS_S3_BUCKET_NAME!,
+            Key: uploadParams.key,
+            Body: readAbleBuffer,
+            ContentType: uploadParams.contentType,
+        }))
+        if (data.$metadata.httpStatusCode === 200) {
+            return true
+        }
+        else {
+            return false
+        }
+    } catch (error) {
+        console.log('error->', error)
         return false
     }
 }

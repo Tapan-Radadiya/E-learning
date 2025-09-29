@@ -90,7 +90,7 @@ const initFfmpegSegmentationEvent = async (moduleId: string) => {
             "-i", localVideoUrl,
             "-codec:v", "libx264",
             "-codec:a", "aac",
-            "-hls_time", '10',
+            "-hls_time", '5',
             "-hls_list_size", "0",
             '-hls_segment_filename', `${outputPath}/segment%03d.ts`,
             '-start_number', '0',
@@ -107,7 +107,7 @@ const initFfmpegSegmentationEvent = async (moduleId: string) => {
                 segmentCount += 1
             }
 
-            if (segmentCount > 5 && !redisDataUpdated) {
+            if (segmentCount > 8 && !redisDataUpdated) {
                 console.log("Enough Segments Created")
                 redisDataUpdated = true
                 await redisClient?.hset(`module-${moduleId}`, {

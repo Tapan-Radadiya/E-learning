@@ -3,10 +3,10 @@ FROM node:20-alpine AS base
 WORKDIR /app
 
 RUN npm i -g pnpm 
-RUN pnpm i -g ts-node
-
 ENV PNPM_HOME="/root/.pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+RUN pnpm i -g ts-node
+
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY Course_Service/package.json ./Course_Service/package.json

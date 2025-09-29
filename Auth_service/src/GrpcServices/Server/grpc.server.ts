@@ -26,7 +26,6 @@ const userServiceImpl = {
         try {
 
             const userIds = call.request.userId
-            console.log('userIds-->', userIds);
             if (!Array.isArray(userIds)) {
                 callback({
                     message: "Invalid Argument",

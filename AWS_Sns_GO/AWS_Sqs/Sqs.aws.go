@@ -165,8 +165,6 @@ func (s *SQSConfig) DeleteSqsMessage(msgReceipt string) {
 
 
 func (a *SMTPAuth) SendEmail(toEmail string, subject string, body string) {
-	fmt.Printf("Sending To :-> %s", toEmail)
-	fmt.Printf("Subject Is :-> %s", subject)
 	m := gomail.NewMessage()
 	m.SetHeader("From", a.SmtpUserName)
 	m.SetHeader("To", toEmail)
@@ -174,7 +172,7 @@ func (a *SMTPAuth) SendEmail(toEmail string, subject string, body string) {
 	m.SetBody("text/html", body)
 
 	d := gomail.NewDialer(a.SmtpHost, a.SmtpPort, a.SmtpUserName, a.SmtpUserPassword)
-	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: false, ServerName: a.SmtpHost}
 	if err := d.DialAndSend(m); err != nil {
 		fmt.Printf("Error Sending Email %+v\n", err)
 	}
