@@ -1,4 +1,4 @@
-import { connectDb, db } from "./config/connectDb"
+import { connectDb } from "./config/connectDb"
 import app from "./app"
 import "dotenv/config"
 import http, { Server } from "http"
@@ -14,7 +14,7 @@ const bootstrap = async () => {
     await enablePrometheus()
 
     await passport.initialize()
-    
+
     const httpServer = http.createServer(app)
     httpServer.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`)
@@ -29,7 +29,7 @@ const shutDown = async (server: Server) => {
 
     await disconnectToGrpc()
 
-    await db.close()
+    // await db.close()
     console.log("Db Connection Closed . . .")
 }
 bootstrap()

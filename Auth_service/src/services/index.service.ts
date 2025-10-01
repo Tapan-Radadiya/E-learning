@@ -1,17 +1,27 @@
 import qrcode from "qrcode"
-import { Op } from "sequelize"
+import { Op, where } from "sequelize"
 import speakeasy from "speakeasy"
 import { EMAIL_TYPE, Role, SPEAKEASY_CONFIG, SQS_MESSAGE_GROUP_ID } from "../constants"
 import { ApiResultInterface } from "../interfaces/common.interface"
-import { user } from "../schema/user.schema"
-import { userRefreshTokens } from "../schema/user_refresh_token.schema"
 import { ApiResult, compareText, decodeJWT, generateAccessToken, generateRefreshToken, hashText, validateJWT } from "../utils/comman"
 import { triggerUserXpEvent } from "../GrpcServices/client/grpc.client"
 import { pushDataToSQS } from "shared-middleware/dist/utils/comman"
 import { NEW_USER_EMAIL_TEMPLATE } from "../EmailTemplates/emailTemplates"
+import { db } from "../config/connectDb"
+import { tbl_user, tbl_user_refresh_tokens } from "../db"
+import { and, eq, inArray } from "drizzle-orm"
 
 const addUserService = async (userBody: { display_name: string, email: string, password: string, role: Role }): Promise<ApiResultInterface> => {
-    const isUserExist = await user.findOne({ where: { email: userBody.email, display_name: userBody.display_name }, raw: true })
+    const isUserExist = await db.query
+        .tbl_user
+        .findFirst({
+            where: (
+                and(
+                    eq(tbl_user.email, userBody.email),
+                    eq(tbl_user.display_name, userBody.display_name)
+                )
+            )
+        })
     if (isUserExist) {
         return ApiResult({ message: "User With Email Or Display_Name Already Exists", statusCode: 409 })
     }
@@ -21,17 +31,30 @@ const addUserService = async (userBody: { display_name: string, email: string, p
     if (!secret.otpauth_url) {
         return ApiResult({ message: "Error Registering User Try AFter SomeTime", statusCode: 409 })
     }
-    const userCreate = await user.create({
-        display_name: userBody.display_name,
-        email: userBody.email,
-        password: await hashText(userBody.password),
-        user_role: userBody.role,
-        speakeasy_key: secret.base32,
-    }, { raw: true })
 
-    delete userCreate.dataValues.password
-    delete userCreate.dataValues.user_role
-    delete userCreate.dataValues.speakeasy_key
+    const userCreate = await db.transaction(async (tx) => {
+        const userData = await tx.insert(tbl_user)
+            .values({
+                display_name: userBody.display_name,
+                email: userBody.email,
+                password: await hashText(userBody.password),
+                user_role: userBody.role,
+                is_mfa_enabled: false
+            })
+            .returning({
+                id: tbl_user.id,
+                email: tbl_user.email,
+                display_name: tbl_user.display_name
+            })
+
+        await tx.insert(tbl_user_refresh_tokens)
+            .values({
+                speakeasy_key: secret.base32, user_id: userData[0].id, refresh_token: ''
+            })
+        return userData[0]
+
+    })
+
     if (userCreate) {
         const qrCodeUrl = speakeasy.otpauthURL({
             secret: secret.base32,
@@ -41,19 +64,19 @@ const addUserService = async (userBody: { display_name: string, email: string, p
         })
         const qrCodeData = await qrcode.toDataURL(qrCodeUrl)
 
-        const data: any = await triggerUserXpEvent({ xpEvent: "NEW_REGISTER", userId: userCreate.toJSON().id })
-        if (data) {
-            await pushDataToSQS({
-                to: userBody.email,
-                body: NEW_USER_EMAIL_TEMPLATE(userBody.display_name, data.xp_point as number),
-                subject: "Welcome Message",
-                emailType: EMAIL_TYPE.USER_CREATION,
-                messageGroupId: SQS_MESSAGE_GROUP_ID.Email_Sending
-            })
-        }
+        // const data: any = await triggerUserXpEvent({ xpEvent: "NEW_REGISTER", userId: userCreate.id })
+        // if (data) {
+        //     await pushDataToSQS({
+        //         to: userBody.email,
+        //         body: NEW_USER_EMAIL_TEMPLATE(userBody.display_name, data.xp_point as number),
+        //         subject: "Welcome Message",
+        //         emailType: EMAIL_TYPE.USER_CREATION,
+        //         messageGroupId: SQS_MESSAGE_GROUP_ID.Email_Sending
+        //     })
+        // }
 
 
-        return ApiResult({ message: "User Created Successfully Scan The QR To Enable MFA", statusCode: 201, data: { qrCodeData, userData: userCreate.dataValues } })
+        return ApiResult({ message: "User Created Successfully Scan The QR To Enable MFA", statusCode: 201, data: { qrCodeData, userData: userCreate } })
     } else {
         return ApiResult({ message: "Error Creating User Try After SomeTime", statusCode: 409, err: userCreate })
     }
@@ -61,8 +84,14 @@ const addUserService = async (userBody: { display_name: string, email: string, p
 
 
 const enableMFAService = async (body: { userEmailId: string, password: string, otp: string }): Promise<ApiResultInterface> => {
-    const validateLogin: any = await user.findOne({ where: { email: body.userEmailId }, raw: true })
-
+    const validateLogin = await db
+        .query
+        .tbl_user
+        .findFirst({
+            where: (
+                eq(tbl_user.email, body.userEmailId)
+            )
+        })
     if (!validateLogin) {
         return ApiResult({ message: "Unable To Found User", statusCode: 404 })
     }
@@ -74,10 +103,27 @@ const enableMFAService = async (body: { userEmailId: string, password: string, o
         return ApiResult({ message: "Invalid credentials", statusCode: 403 })
     }
 
-    const verify = validateValidMFAOtp(validateLogin.speakeasy_key, body.otp)
+    const userTokenData = await db
+        .query
+        .tbl_user_refresh_tokens
+        .findFirst({
+            where: (
+                eq(tbl_user_refresh_tokens.user_id, validateLogin.id)
+            )
+        })
+    if (!userTokenData) {
+        return ApiResult({ message: "Unable To Found User", statusCode: 404 })
+    }
+
+    const verify = validateValidMFAOtp(userTokenData.speakeasy_key!, body.otp)
 
     if (verify) {
-        await user.update({ is_mfa_enabled: true }, { where: { email: body.userEmailId } })
+        await db
+            .update(tbl_user)
+            .set({ is_mfa_enabled: true })
+            .where(
+                eq(tbl_user.id, validateLogin.id)
+            )
         return ApiResult({ message: "Multi Factor Authentication Is Enabled Please Login", statusCode: 200 })
     } else {
         return ApiResult({ message: "Invalid MFA Code Or Error Eanbling Multi Factor Authentication Please Try After SomeTime", statusCode: 409 })
@@ -86,38 +132,58 @@ const enableMFAService = async (body: { userEmailId: string, password: string, o
 }
 
 const loginUserService = async (userLoginBody: { email: string, password: string, otp: string }): Promise<ApiResultInterface> => {
-    const validateLogin = await user.findOne({ where: { email: userLoginBody.email } })
+    // const validateLogin = await user.findOne({ where: { email: userLoginBody.email } })
 
+    const validateLogin = await db.query.tbl_user.findFirst({
+        where: (
+            eq(tbl_user.email, userLoginBody.email)
+        )
+    })
     if (!validateLogin) {
         return ApiResult({ message: "Unable To Found User", statusCode: 404 })
     }
 
-    if (!validateLogin.dataValues.is_mfa_enabled) {
+    if (!validateLogin.is_mfa_enabled) {
         return ApiResult({ message: "Please Enable MFA", statusCode: 404 })
     }
 
-    if (await !compareText(userLoginBody.password, validateLogin.dataValues.data)) {
+    if (await !compareText(userLoginBody.password, validateLogin.password)) {
         return ApiResult({ message: "Invalid credentials", statusCode: 403 })
     }
+    const userTokenData = await db
+        .query
+        .tbl_user_refresh_tokens
+        .findFirst({
+            where: (
+                eq(tbl_user_refresh_tokens.user_id, validateLogin.id)
+            )
+        })
+    if (!userTokenData) {
+        return ApiResult({ message: "Unable To Found User", statusCode: 404 })
+    }
 
-    const mfaVarification = validateValidMFAOtp(validateLogin.dataValues.speakeasy_key, userLoginBody.otp)
+    const mfaVarification = validateValidMFAOtp(userTokenData.speakeasy_key!, userLoginBody.otp)
 
     if (!mfaVarification) {
         return ApiResult({ message: "Invalid MFA Code", statusCode: 403 })
     }
 
     const accessToken = await generateAccessToken({
-        id: validateLogin.dataValues.id,
-        email: validateLogin.dataValues.email,
-        role: validateLogin.dataValues.user_role,
+        id: validateLogin.id,
+        email: validateLogin.email,
+        role: validateLogin.user_role as Role,
         mfa: true
     })
-    const refreshToken = await generateRefreshToken({ email: validateLogin.dataValues.email })
+    const refreshToken = await generateRefreshToken({ email: validateLogin.email })
 
-    await userRefreshTokens.upsert({
-        user_id: validateLogin.dataValues.id,
-        refresh_token: refreshToken
-    }, {})
+    await db
+        .insert(tbl_user_refresh_tokens)
+        .values({ refresh_token: refreshToken, user_id: validateLogin.id })
+        .onConflictDoUpdate({
+            target: tbl_user_refresh_tokens.user_id,
+            set: { refresh_token: refreshToken }
+        })
+
     return ApiResult({ message: "User Logged In Successfully", statusCode: 200, data: { accessToken, refreshToken } })
 }
 
@@ -129,17 +195,23 @@ const reevaluteRefreshToken = async (refreshToken: string): Promise<ApiResultInt
         if (isValidJWT) {
 
             const data: any = await decodeJWT(refreshToken, 'REFRESH')
-            const userDetails: any = await user.findOne({ where: { email: data.email }, raw: true })
+            const userDetails = await db.query.tbl_user.findFirst({
+                where: (
+                    eq(tbl_user.email, data.email)
+                )
+            })
             if (userDetails) {
-                const userRefreshTokensData = await userRefreshTokens.findOne({
-                    where: {
-                        user_id: userDetails.
-                            id, refresh_token: refreshToken
-                    }
+                const userRefreshTokensData = await db.query.tbl_user_refresh_tokens.findFirst({
+                    where: (
+                        and(
+                            eq(tbl_user_refresh_tokens.user_id, userDetails.id),
+                            eq(tbl_user_refresh_tokens.refresh_token, refreshToken)
+                        )
+                    )
                 })
 
-                if (userRefreshTokensData?.toJSON()) {
-                    const newAccessToken = await generateAccessToken({ email: userDetails.email, id: userDetails.id, role: userDetails.user_role, mfa: userDetails.is_mfa_enabled })
+                if (userRefreshTokensData) {
+                    const newAccessToken = await generateAccessToken({ email: userDetails.email, id: userDetails.id, role: userDetails.user_role as Role, mfa: userDetails.is_mfa_enabled })
                     return ApiResult({ message: "New Access Token Generated", statusCode: 200, data: { accessToken: newAccessToken } })
                 }
             }
@@ -157,7 +229,9 @@ const reevaluteRefreshToken = async (refreshToken: string): Promise<ApiResultInt
 }
 
 const getUserProfileService = async (userId: string): Promise<ApiResultInterface> => {
-    const getUserData = await user.findOne({ where: { id: userId }, raw: true })
+    const getUserData = await db.query.tbl_user.findFirst({
+        where: (eq(tbl_user.id, userId))
+    })
     if (getUserData) {
         return ApiResult({ message: "User Found", statusCode: 200, data: getUserData })
     } else {
@@ -167,15 +241,15 @@ const getUserProfileService = async (userId: string): Promise<ApiResultInterface
 
 const getUserProfilesGrpcService = async (userId: string[]): Promise<ApiResultInterface> => {
     try {
-        const getUserData = await user.findAll({
-            where: {
-                id: {
-                    [Op.in]: userId
-                }
-            },
-            attributes: ['id', 'display_name', 'email', 'user_role'],
-            raw: true
-        })
+        const getUserData = await db
+            .select({
+                id: tbl_user.id,
+                display_name: tbl_user.display_name,
+                email: tbl_user.email,
+                user_role: tbl_user.user_role
+            })
+            .from(tbl_user)
+            .where(inArray(tbl_user.id, userId))
         return ApiResult({ message: "Data Fetched", statusCode: 200, data: getUserData })
     } catch (error) {
         return ApiResult({ message: "Internal Server Error", statusCode: 500 })

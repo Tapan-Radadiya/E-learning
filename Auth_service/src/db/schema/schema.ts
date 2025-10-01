@@ -15,9 +15,9 @@ export const tbl_user = pgTable("tbl_user", {
 })
 
 export const tbl_user_refresh_tokens = pgTable("tbl_user_refresh_tokens", {
-    user_id: uuid('user_id').unique().primaryKey().references(() => tbl_user.id),
-    refresh_token: varchar('refresh_token').notNull(),
-    speakeasy_key: varchar('speakeasy_key').notNull(),
+    user_id: uuid('user_id').unique().primaryKey().references(() => tbl_user.id, { onDelete: 'cascade' }),
+    refresh_token: varchar('refresh_token'),
+    speakeasy_key: varchar('speakeasy_key'),
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').$onUpdate(() => new Date())
 })

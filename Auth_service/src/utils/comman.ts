@@ -16,9 +16,9 @@ export const ApiResult = (data: ApiResultInterface) => {
     }
 }
 
-export const hashText = async (plainText: string) => {
+export const hashText = async (plainText: string): Promise<string> => {
 
-    const hash = await new Promise((resolve, reject) => {
+    const hash: string = await new Promise((resolve, reject) => {
         crypto.pbkdf2(plainText, SALT, 10000, 64, 'sha256', (err, data) => {
             if (err) {
                 reject(err)
