@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --exec ts-node src/index.ts",
-    "db:migrate": "npx sequelize-cli db:migrate"
+    "migrate:generate": "npx drizzle-kit generate",
+    "migrate": "npx drizzle-kit migrate"
   },
   "author": "",
   "license": "ISC",
@@ -19,13 +20,11 @@
     "nodemon": "^3.1.7",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.7",
     "shared-middleware": "workspace:*"
   },
   "devDependencies": {
     "grpc-tools": "^1.13.0",
-    "grpc_tools_node_protoc_ts": "^5.3.3",
-    "sequelize-cli": "^6.6.3"
+    "grpc_tools_node_protoc_ts": "^5.3.3"
   },
   "pnpm": {
     "overrides": {}

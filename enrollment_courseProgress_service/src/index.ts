@@ -1,6 +1,6 @@
 import http, { Server } from "http"
 import { app } from "./app"
-import { connectToDb, db } from "./config/index.config"
+import { connectToDb } from "./config/index.config"
 import { ConnectGrpc, DisconnectGrpc } from "./GrpcServices/server/enrollment_progress.grpc"
 import { enablePrometheus } from "./config/enable.prometheys"
 
@@ -27,7 +27,6 @@ const bootstrapHttps = async () => {
 
 
 const shutDown = (server: Server) => {
-    db.close()
     console.log("Database ShutDown . . .")
 
     server.close()

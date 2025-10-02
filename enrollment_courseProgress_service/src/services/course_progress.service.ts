@@ -1,9 +1,10 @@
-import { UUID } from "crypto"
 import { ApiResult, ApiResultInterface } from "../comman"
 import { getCourseModuleGRPCService, getCourseDataGRPCService, fetchUserXp, getUsersDataGRPCService, fetchXpEventData, triggerUserXpEvent } from "../GrpcServices/client/courseService.grpc"
-import { course_progresses } from "../schema/courseProgress.schema"
 import { EMAIL_TYPE, pushDataToSQS, SQS_MESSAGE_GROUP_ID } from "shared-middleware/dist/utils/comman"
 import { COURSE_COMPLETION_TEMPLATE } from "../EmailTemplates/emailTemplates"
+import { db } from "../config/index.config"
+import { and, eq } from "drizzle-orm"
+import { tbl_course_progresses, tbl_user_enrollments } from "../db"
 
 const courseProgressService = async (moduleId: string, userId: string): Promise<ApiResultInterface> => {
     const moduleData: any = await getCourseModuleGRPCService(moduleId)
@@ -11,23 +12,39 @@ const courseProgressService = async (moduleId: string, userId: string): Promise<
         return ApiResult({ statusCode: 404, message: "Unable To Find ModuleData" })
     }
 
-    const progressPercent = await course_progresses.findOne({
-        where: { user_id: userId, course_id: moduleData.course_id }
+    const isUserEnrolled = await db.query.tbl_user_enrollments.findFirst({
+        where: eq(
+            tbl_user_enrollments.course_id, moduleData.course_id
+        )
+    })
+    if (!isUserEnrolled) {
+        return ApiResult({ statusCode: 400, message: "User is not enrolled for this course" })
+    }
+    const progressPercent = await db.query.tbl_course_progresses.findFirst({
+        where: eq(tbl_course_progresses.enrollment_id, isUserEnrolled.id)
     })
 
     if (!progressPercent) {
         return ApiResult({ statusCode: 404, message: "User Is Not Enrolled Yet For This Course" })
     }
-    if (progressPercent?.dataValues.is_completed) {
+    if (progressPercent?.is_completed) {
         return ApiResult({ statusCode: 409, message: "Course Already Completed" })
     }
-    if (progressPercent && progressPercent?.dataValues.progress_percent < 100) {
-        await progressPercent.update({ progress_percent: moduleData.completion_percentage + progressPercent.dataValues.progress_percent })
+    if (progressPercent && progressPercent?.progress_percent < 100) {
+        await db
+            .update(tbl_course_progresses)
+            .set({ progress_percent: moduleData.completion_percentage + progressPercent.progress_percent })
+            .where(eq(tbl_course_progresses.enrollment_id, isUserEnrolled.id))
         return ApiResult({ statusCode: 200, message: "Progress Updated" })
     }
-    else if (progressPercent && progressPercent?.dataValues.progress_percent >= 100) {
+    else if (progressPercent && progressPercent?.progress_percent >= 100) {
         // Marking User Progress For Course As Complete
-        const markCourseAsComplete = await progressPercent.update({ progressPercent: 100, is_completed: true })
+        const markCourseAsComplete = await db
+            .update(tbl_course_progresses)
+            .set({ progress_percent: 100, is_completed: true })
+            .where(
+                eq(tbl_course_progresses.enrollment_id, isUserEnrolled.id)
+            )
 
         // Fetch Data And Send Mail
         if (markCourseAsComplete) {
@@ -66,11 +83,18 @@ const courseProgressService = async (moduleId: string, userId: string): Promise<
 
 const getCourseProgressData = async (courseId: string, userId: string): Promise<ApiResultInterface> => {
 
-    const userData = await course_progresses.findOne({
-        where: {
-            user_id: userId, course_id: courseId
-        },
-        raw: true
+    const isUserEnrolled = await db.query.tbl_user_enrollments.findFirst({
+        where: and(
+            eq(tbl_user_enrollments.course_id, courseId),
+            eq(tbl_user_enrollments.user_id, userId)
+        )
+    })
+    if (!isUserEnrolled) {
+        return ApiResult({ statusCode: 400, message: "User is not enrolled for this course" })
+    }
+
+    const userData = await db.query.tbl_course_progresses.findFirst({
+        where: eq(tbl_course_progresses.enrollment_id, isUserEnrolled.id)
     })
 
     if (userData) {
@@ -78,7 +102,6 @@ const getCourseProgressData = async (courseId: string, userId: string): Promise<
     } else {
         return ApiResult({ statusCode: 409, message: "Error Fetching Data" })
     }
-
 }
 
 export {

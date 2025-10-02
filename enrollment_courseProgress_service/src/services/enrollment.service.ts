@@ -1,21 +1,29 @@
 import { ApiResult, ApiResultInterface } from "../comman";
-import { user_enrollments } from "../schema/enrollment.schema"
-import { course_progresses } from "../schema/courseProgress.schema"
 import { CourseDataInterface, fetchUserXp, fetchXpEventData, getCourseDataGRPCService, getUsersDataGRPCService, triggerUserXpEvent } from "../GrpcServices/client/courseService.grpc";
 import { EMAIL_TYPE, pushDataToSQS, SQS_MESSAGE_GROUP_ID } from "shared-middleware/dist/utils/comman"
 import { COURSE_ENROLLMENT_TEMPLATE, ENROLLMENT_FAILED, FIRST_ENROLLMENT_TEMPLATE } from "../EmailTemplates/emailTemplates";
 import { db } from "../config/index.config";
+import { tbl_course_progresses, tbl_user_enrollments } from "../db";
+import { and, eq } from "drizzle-orm";
 
 const enrollUserService = async (courseData: CourseDataInterface, user_id: string): Promise<ApiResultInterface> => {
 
     let IS_FIRST_ENROLLMENT: boolean = false
-    const isUserAlreadyEnrolled = await user_enrollments.findOne({ where: { user_id, course_id: courseData.id } })
+    const isUserAlreadyEnrolled = await db.query.tbl_user_enrollments.findFirst({
+        where: and(
+            eq(tbl_user_enrollments.course_id, courseData.id),
+            eq(tbl_user_enrollments.user_id, user_id)
+        )
+    })
 
     if (isUserAlreadyEnrolled) {
         return ApiResult({ statusCode: 409, message: "User Is Already Enrolled" })
     }
 
-    const userEnrollmentData = await user_enrollments.findAll({ where: { user_id }, raw: true })
+    const userEnrollmentData = await db.query.tbl_user_enrollments.findMany({
+        where: eq(tbl_user_enrollments.user_id, user_id)
+    })
+
     IS_FIRST_ENROLLMENT = userEnrollmentData.length === 0
 
     const userData = await getUsersDataGRPCService([user_id])
@@ -27,15 +35,24 @@ const enrollUserService = async (courseData: CourseDataInterface, user_id: strin
     try {
 
         // Transactions
-        const result = await db.transaction(async (t) => {
-            const enrollUser = await user_enrollments.create({ user_id, course_id: courseData.id }, { transaction: t })
 
-            await course_progresses.create({
-                user_id,
-                course_id: courseData.id,
-                progress_percent: 0,
-                is_completed: false
-            }, { transaction: t })
+        const result = await db.transaction(async (tx) => {
+            const enrollUser = await db
+                .insert(tbl_user_enrollments)
+                .values({
+                    user_id,
+                    course_id: courseData.id
+                })
+                .returning({
+                    id: tbl_user_enrollments.id
+                })
+            await db
+                .insert(tbl_course_progresses)
+                .values({
+                    enrollment_id: enrollUser[0].id,
+                    progress_percent: 0,
+                    is_completed: false
+                })
             return enrollUser
         })
 
@@ -86,8 +103,13 @@ const enrollUserService = async (courseData: CourseDataInterface, user_id: strin
         return ApiResult({ statusCode: 201, message: "User Is Enrolled Successfully" })
     } catch (error) {
         console.log("❌ Transaction Failed")
-        await user_enrollments.destroy({ where: { user_id, course_id: courseData.id } })
-        await course_progresses.destroy({ where: { user_id, course_id: courseData.id } })
+
+        await db.delete(tbl_user_enrollments).where(
+            and(
+                eq(tbl_user_enrollments.course_id, courseData.id),
+                eq(tbl_user_enrollments.user_id, user_id)
+            )
+        )
 
         const emailBody = ENROLLMENT_FAILED({ courseName: courseData.title, userEmail: userData[0].email, time: String(new Date()) })
 
@@ -106,9 +128,12 @@ const getCourseEnrollmentDetails = async (courseId: string): Promise<ApiResultIn
     const courseData = await getCourseDataGRPCService(courseId)
     if (!courseData) {
         return ApiResult({ message: "Course Not Found" })
-
     }
-    const data = await user_enrollments.findAll({ where: { course_id: courseId }, attributes: ['user_id'], raw: true })
+
+    const data = await db.query.tbl_user_enrollments.findMany({
+        where: eq(tbl_user_enrollments.course_id, courseId)
+    })
+
     const userIds = data.map((ele: any) => ele.user_id)
     if (userIds.length === 0) {
         return ApiResult({ statusCode: 200, message: "No user is enrolled" })
