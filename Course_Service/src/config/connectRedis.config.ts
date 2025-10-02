@@ -1,6 +1,8 @@
 import Redis from "ioredis"
-import { course_modules } from "../models/module.schema"
 import * as fs from "fs"
+import { db } from "./connectDb"
+import { tbl_course_modules } from "../db"
+import { eq } from "drizzle-orm"
 
 let redisClient: Redis | null = null
 
@@ -14,7 +16,6 @@ export const initRedisClient = async () => {
     redisClient.on('error', (err) => {
         console.error('Redis Connection Error', err);
     });
-
 }
 
 
@@ -43,10 +44,12 @@ export const detectDeletedKeys = async () => {
             const s3UrlData = await redisClient.hget(`module-ref:${moduleId}`, "s3VideoUrl")
             const localVideoUrl = await redisClient.hget(`module-ref:${moduleId}`, "localVideoUrl")
             const localSegmentVideoUrl = await redisClient.hget(`module-ref:${moduleId}`, "localSegmentDataurl")
-            const updateData = await course_modules.update({
+
+            // Set module live to false so that from now video will be served from s3
+            await db.update(tbl_course_modules).set({
                 is_module_live: false,
-                video_url: s3UrlData
-            }, { where: { id: moduleId } })
+                video_url: s3UrlData!
+            }).where(eq(tbl_course_modules.id, moduleId))
 
             if (localVideoUrl) {
                 fs.unlink(localVideoUrl, (err) => {

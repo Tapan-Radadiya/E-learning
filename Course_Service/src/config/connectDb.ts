@@ -1,16 +1,19 @@
-import { Sequelize } from "sequelize";
 import "dotenv/config"
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres"
+import * as schema from "../db/index"
 
-export const db = new Sequelize(process.env.POSTGRESS_CONN_URL!, {
-    dialect: 'postgres',
-    logging: false
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL
 })
+
+export const db = drizzle(pool, { schema })
 
 export const connectDB = async () => {
     try {
-        await db.authenticate()
-        console.log("CourseService/ Connection With Pgsql Has Been Established 🚀")
+        await pool.query("SELECT 1")
+        console.log("Connected With DB ✅")
     } catch (error) {
-        console.log('error->', error)
+        console.log("Unable To Connect With DB ❌")
     }
 }

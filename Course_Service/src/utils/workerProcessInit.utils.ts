@@ -5,8 +5,10 @@ import { Files } from "formidable";
 import * as path from "path";
 import * as fs from "fs";
 import { Worker } from "worker_threads";
-import { course_modules } from "../models/module.schema";
 import { spawn } from "child_process";
+import { db } from "../config/connectDb";
+import { tbl_course_modules } from "../db";
+import { eq } from "drizzle-orm";
 
 
 export const initVideoUploadWorkerProcess = async ({ files, moduleId, courseId }: { files: Files, moduleId: string, courseId: string }) => {
@@ -55,8 +57,12 @@ export const initVideoUploadWorkerProcess = async ({ files, moduleId, courseId }
                         localVideoUrl: data.localVideoUrl,
                         localSegmentDataurl: ''
                     })
-
-                    await course_modules.update({ video_url: data.localVideoUrl }, { where: { id: moduleId } })
+                    await db
+                        .update(tbl_course_modules)
+                        .set({ video_url: data.localVideoUrl })
+                        .where(
+                            eq(tbl_course_modules.id, moduleId)
+                        )
                     await initFfmpegSegmentationEvent(moduleId)
                 }
             }

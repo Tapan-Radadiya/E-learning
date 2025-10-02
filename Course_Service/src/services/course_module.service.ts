@@ -1,15 +1,15 @@
+import { integer } from "aws-sdk/clients/cloudfront";
+import { eq } from "drizzle-orm";
 import { Request } from "express";
 import formidable, { Fields, Files } from "formidable";
+import { db } from "../config/connectDb";
+import { getRedisClient } from "../config/connectRedis.config";
 import { HLS_DIR_PATH, HLS_PUBLIC_PATH, LIVE_STREAM_SEGMENT_DATA, TEMP_UPLOAD_PATH } from "../constants";
-import { courses } from "../models/course.schema";
-import { course_modules } from "../models/module.schema";
+import { tbl_course_modules, tbl_courses } from "../db";
 import { DeleteFileFromS3 } from "../utils/awsS3.utils";
 import { ApiResult, ApiResultInterface, ExtractFormData, formidableFieldsFormat, getFileData, validateWithZod } from "../utils/comman";
 import { initVideoUploadWorkerProcess } from "../utils/workerProcessInit.utils";
 import { createCourseModuleZodValidation } from "../ZodValidation/create_module.zod";
-import { getRedisClient } from "../config/connectRedis.config";
-import * as fs from "fs";
-import { integer } from "aws-sdk/clients/cloudfront";
 
 
 
@@ -18,7 +18,12 @@ const AddCourseModuleService = async (req: Request): Promise<ApiResultInterface>
 
         let moduleId
         const { courseId } = req.params
-        const isValidCourse = await courses.findOne({ where: { id: courseId } })
+        const isValidCourse = await db
+            .query
+            .tbl_courses
+            .findFirst({
+                where: eq(tbl_courses.id, courseId)
+            })
         if (!isValidCourse) {
             return ApiResult({ statusCode: 404, message: "Course not found" })
         }
@@ -44,15 +49,16 @@ const AddCourseModuleService = async (req: Request): Promise<ApiResultInterface>
             return ApiResult({ message: "Invalid Data", data: isValid, statusCode: 400 })
         }
 
-        const course_moduleData = await course_modules.create({
+        const course_moduleData = await db.insert(tbl_course_modules).values({
             course_id: courseId,
-            video_url: files?.video?.[0].filepath ?? '', // Video Path Stored In Memory 
+            video_url: files?.video?.[0].filepath ?? '', // Video Path Stored In Local 
             title: fields.title,
             description: fields.description,
             completion_percentage: fields.completion_percentage
+        }).returning({
+            id: tbl_course_modules.id
         })
-
-        moduleId = course_moduleData.getDataValue("id")
+        moduleId = course_moduleData[0].id
         if (Array.isArray(files.video) && files.video.length > 0) {
             // Adding Data In Worker Process
             await initVideoUploadWorkerProcess({
@@ -74,11 +80,13 @@ const AddCourseModuleService = async (req: Request): Promise<ApiResultInterface>
 }
 
 const removeCourseModuleService = async (moduleId: string): Promise<ApiResultInterface> => {
-    const isModuleExist = await course_modules.findOne({ where: { id: moduleId } })
+    const isModuleExist = await db.query.tbl_course_modules.findFirst({
+        where: eq(tbl_course_modules.id, moduleId)
+    })
     try {
         if (isModuleExist) {
-            await DeleteFileFromS3(isModuleExist.dataValues.video_url)
-            await isModuleExist.destroy()
+            await DeleteFileFromS3(isModuleExist.video_url)
+            await db.delete(tbl_course_modules).where(eq(tbl_course_modules.id, moduleId))
             return ApiResult({ statusCode: 200, message: "Module Deleted Successfully" })
         }
         else {
@@ -90,12 +98,19 @@ const removeCourseModuleService = async (moduleId: string): Promise<ApiResultInt
 }
 
 const getAllCourseModuleService = async (courseId: string): Promise<ApiResultInterface> => {
-    const isValidCourse = await courses.findOne({ where: { id: courseId } })
+    const isValidCourse = await db
+        .query
+        .tbl_courses
+        .findFirst({
+            where: eq(tbl_courses.id, courseId)
+        })
     if (!isValidCourse) {
         return ApiResult({ statusCode: 404, message: "Cannot Found Course" })
     }
     try {
-        const allCourses = await course_modules.findAll({ where: { course_id: isValidCourse.dataValues.id } })
+        const allCourses = await db.query.tbl_course_modules.findMany({
+            where: eq(tbl_course_modules.course_id, isValidCourse.id)
+        })
         return ApiResult({ statusCode: 200, message: "Data Fetched", data: allCourses })
     } catch (error) {
         return ApiResult({ statusCode: 403, message: "Error Fetching Modules " })
@@ -105,21 +120,29 @@ const getAllCourseModuleService = async (courseId: string): Promise<ApiResultInt
 
 const updateCourseModuleService = async (req: Request): Promise<ApiResultInterface> => {
     const { moduleId } = req.params
-    const isModuleExists = await course_modules.findOne({ where: { id: moduleId } })
+    const isModuleExists = await db.query
+        .tbl_course_modules
+        .findFirst({
+            where: eq(tbl_course_modules.id, moduleId)
+        })
     if (isModuleExists) {
-        const { fields, files } = await ExtractFormData(req, `moduleVideo/${isModuleExists.dataValues.course_id}`)
+        const { fields, files } = await ExtractFormData(req, `moduleVideo/${isModuleExists.course_id}`)
         const isValid = validateWithZod(createCourseModuleZodValidation, fields)
         if (!isValid) {
             return ApiResult({ message: "Invalid Data", data: isValid, statusCode: 400 })
         }
-        const courseModuleData = await course_modules.update({
-            title: fields.title,
-            description: fields.description,
-            video_url: files[0]
-        }, { where: { id: moduleId } })
-
+        const courseModuleData = await db
+            .update(tbl_course_modules)
+            .set({
+                title: fields.title,
+                description: fields.description,
+                video_url: files[0]
+            })
+            .where(
+                eq(tbl_course_modules.id, moduleId)
+            )
         if (courseModuleData) {
-            await DeleteFileFromS3(isModuleExists.dataValues.video_url)
+            await DeleteFileFromS3(isModuleExists.video_url)
             return ApiResult({ message: "Module Updated Successfully", statusCode: 200 })
         } else {
             return ApiResult({ message: "Error Updating Module", statusCode: 409 })
@@ -133,11 +156,12 @@ const updateCourseModuleService = async (req: Request): Promise<ApiResultInterfa
 const getModuleDetailsService = async (moduleId: string): Promise<ApiResultInterface> => {
 
     try {
-        const moduleDetails = await course_modules.findOne({
-            where: { id: moduleId },
-            attributes: ['id', 'title', 'description', 'completion_percentage', 'course_id', 'video_url', 'is_module_live'],
-            raw: true
-        })
+        const moduleDetails = await db
+            .query
+            .tbl_course_modules
+            .findFirst({
+                where: (eq(tbl_course_modules.id, moduleId))
+            })
         if (moduleDetails) {
             return ApiResult({ statusCode: 200, message: "Data Fetched", data: moduleDetails })
         } else {
@@ -264,10 +288,10 @@ const customUserSegmentService = async (moduleId: string) => {
 }
 export {
     AddCourseModuleService,
+    customUserSegmentService,
     getAllCourseModuleService,
+    getM3U8FileDetailsService,
     getModuleDetailsService,
     removeCourseModuleService,
-    updateCourseModuleService,
-    getM3U8FileDetailsService,
-    customUserSegmentService
+    updateCourseModuleService
 };

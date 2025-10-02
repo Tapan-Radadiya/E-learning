@@ -35,7 +35,7 @@ const shutDown = async (server: Server) => {
         console.log("Grpc Server Shut Down . . .")
     })
 
-    await db.close()
+    // await db.close()
     console.log("Database Shut Down . . .")
 }
 
