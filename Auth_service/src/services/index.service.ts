@@ -1,5 +1,4 @@
 import qrcode from "qrcode"
-import { Op, where } from "sequelize"
 import speakeasy from "speakeasy"
 import { EMAIL_TYPE, Role, SPEAKEASY_CONFIG, SQS_MESSAGE_GROUP_ID } from "../constants"
 import { ApiResultInterface } from "../interfaces/common.interface"
@@ -63,20 +62,22 @@ const addUserService = async (userBody: { display_name: string, email: string, p
             encoding: "base32"
         })
         const qrCodeData = await qrcode.toDataURL(qrCodeUrl)
+        try {
 
-        // const data: any = await triggerUserXpEvent({ xpEvent: "NEW_REGISTER", userId: userCreate.id })
-        // if (data) {
-        //     await pushDataToSQS({
-        //         to: userBody.email,
-        //         body: NEW_USER_EMAIL_TEMPLATE(userBody.display_name, data.xp_point as number),
-        //         subject: "Welcome Message",
-        //         emailType: EMAIL_TYPE.USER_CREATION,
-        //         messageGroupId: SQS_MESSAGE_GROUP_ID.Email_Sending
-        //     })
-        // }
-
-
-        return ApiResult({ message: "User Created Successfully Scan The QR To Enable MFA", statusCode: 201, data: { qrCodeData, userData: userCreate } })
+            const data: any = await triggerUserXpEvent({ xpEvent: "NEW_REGISTER", userId: userCreate.id })
+            if (data) {
+                await pushDataToSQS({
+                    to: userBody.email,
+                    body: NEW_USER_EMAIL_TEMPLATE(userBody.display_name, data.xp_point as number),
+                    subject: "Welcome Message",
+                    emailType: EMAIL_TYPE.USER_CREATION,
+                    messageGroupId: SQS_MESSAGE_GROUP_ID.Email_Sending
+                })
+            }
+            return ApiResult({ message: "User Created Successfully Scan The QR To Enable MFA", statusCode: 201, data: { qrCodeData, userData: userCreate } })
+        } catch (error) {
+            return ApiResult({ message: `${error} User Created Successfully Scan The QR To Enable MFA`, statusCode: 201, data: { qrCodeData, userData: userCreate } })
+        }
     } else {
         return ApiResult({ message: "Error Creating User Try After SomeTime", statusCode: 409, err: userCreate })
     }
@@ -132,7 +133,6 @@ const enableMFAService = async (body: { userEmailId: string, password: string, o
 }
 
 const loginUserService = async (userLoginBody: { email: string, password: string, otp: string }): Promise<ApiResultInterface> => {
-    // const validateLogin = await user.findOne({ where: { email: userLoginBody.email } })
 
     const validateLogin = await db.query.tbl_user.findFirst({
         where: (

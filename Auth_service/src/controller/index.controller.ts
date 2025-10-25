@@ -1,14 +1,13 @@
-import { NextFunction, Request, Response } from "express";
-import { ApiResult, validateWithZod } from "../utils/comman"
-import { zodUserCreateValidation, zodUserLoginValidation, zodUserMFAEnableValidation } from "../ZodValidations/user.validation"
+import { Request, Response } from "express";
 import {
     addUserService,
+    enableMFAService,
     getUserProfileService,
     loginUserService,
-    reevaluteRefreshToken,
-    enableMFAService
-} from "../services/index.service"
-import passport from "passport";
+    reevaluteRefreshToken
+} from "../services/index.service";
+import { ApiResult, validateWithZod } from "../utils/comman";
+import { zodUserCreateValidation, zodUserLoginValidation, zodUserMFAEnableValidation } from "../ZodValidations/user.validation";
 
 const createUserController = async (req: Request, res: Response) => {
     if (!req.body) {
@@ -122,4 +121,4 @@ const getUserProfile = async (req: Request, res: Response) => {
     }
 }
 
-export { createUserController, loginUser, refreshTokenData, getUserProfile, enableMFA }
+export { createUserController, enableMFA, getUserProfile, loginUser, refreshTokenData };
