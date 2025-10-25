@@ -29,6 +29,13 @@
       "when": 1761424418717,
       "tag": "0003_amazing_earthquake",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1761424479487,
+      "tag": "0004_curious_big_bertha",
+      "breakpoints": true
     }
   ]
 }
