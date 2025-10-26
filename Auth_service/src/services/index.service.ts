@@ -7,8 +7,31 @@ import { triggerUserXpEvent } from "../GrpcServices/client/grpc.client"
 import { pushDataToSQS } from "shared-middleware/dist/utils/comman"
 import { NEW_USER_EMAIL_TEMPLATE } from "../EmailTemplates/emailTemplates"
 import { db } from "../config/connectDb"
-import { tbl_user, tbl_user_refresh_tokens } from "../db"
+import { tbl_organization, tbl_user, tbl_user_refresh_tokens } from "../db"
 import { and, eq, inArray } from "drizzle-orm"
+
+const createOrgService = async (body: { org_name: string }): Promise<ApiResultInterface> => {
+    const isOrgExists = await db.query.tbl_organization.findFirst({
+        where: eq(
+            tbl_organization.org_name,
+            body.org_name.toLowerCase()
+        )
+    })
+    try {
+        if (isOrgExists) {
+            return ApiResult({ message: "Organization with this name already exists", statusCode: 409 })
+        }
+
+        const newOrg = await db.insert(tbl_organization).values({
+            org_name: body.org_name.toLowerCase()
+        })
+
+        return ApiResult({ message: "New Organization Created", statusCode: 201, data: newOrg })
+
+    } catch (error: unknown) {
+        return ApiResult({ message: "Error Creating Organization Try After SomeTime", statusCode: 409, err: error as Error })
+    }
+}
 
 const addUserService = async (userBody: { display_name: string, email: string, password: string, role: Role }): Promise<ApiResultInterface> => {
     const isUserExist = await db.query
@@ -271,5 +294,6 @@ export {
     getUserProfileService,
     getUserProfilesGrpcService,
     loginUserService,
-    reevaluteRefreshToken
+    reevaluteRefreshToken,
+    createOrgService
 }

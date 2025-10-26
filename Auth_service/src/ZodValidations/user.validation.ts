@@ -1,3 +1,4 @@
+import { varchar } from "drizzle-orm/mysql-core"
 import * as z from "zod/v4"
 
 const zodUserCreateValidation = z.object({
@@ -5,6 +6,10 @@ const zodUserCreateValidation = z.object({
     email: z.string().email(),
     password: z.string().min(8).max(50),
     role: z.enum(['ADMIN', 'USER'])
+})
+
+const zodOrganizationCreateValidation = z.object({
+    org_name: z.string().min(1)
 })
 
 const zodUserLoginValidation = z.object({
@@ -18,4 +23,9 @@ const zodUserMFAEnableValidation = z.object({
     email: z.string().email(),
     password: z.string().min(8).max(50),
 })
-export { zodUserCreateValidation, zodUserLoginValidation, zodUserMFAEnableValidation }
+export {
+    zodUserCreateValidation,
+    zodUserLoginValidation,
+    zodUserMFAEnableValidation,
+    zodOrganizationCreateValidation
+}
