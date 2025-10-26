@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { ApiResult, Role } from "../utils/comman";
+import { ApiResult } from "../utils/comman";
 
-export const AuthorizeUser = (allowedRole: Role[]) => {
+export const AuthorizeUser = (allowedRole: string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        const currentRole = req.headers["x-user-role"] as Role;
+        const currentRole = req.headers["x-user-role"] as string;
         if (allowedRole.includes(currentRole)) {
             next()
         } else {

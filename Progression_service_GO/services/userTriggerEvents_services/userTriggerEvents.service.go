@@ -46,6 +46,7 @@ func (ute *UserTriggerEventService) UserXpTriggerService(userXpTriggerData *mode
 
 	if err := config.DB.First(&userXpData, "userid = ?", userXpTriggerData.UserId).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			fmt.Println("Creating New User")
 			userXpData.ID = uuid.New() // Creating A New User As This Is User's First Achievement
 			userXpData.UserId = userXpTriggerData.UserId
 			config.DB.Create(&userXpData)

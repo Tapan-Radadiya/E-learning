@@ -2,8 +2,7 @@ import speakeasy from "speakeasy"
 export const SALT = 'lionlovesgrass'
 
 export enum Role {
-    ADMIN = "ADMIN",
-    USER = "USER"
+    SUPER_ADMIN = "SUPER_ADMIN",
 }
 
 

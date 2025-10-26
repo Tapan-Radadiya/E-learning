@@ -126,7 +126,6 @@ func (s *SQSConfig) ReceiveSQSMsg() {
 	}
 	for {
 		data, err := s.SqsClient.ReceiveMessage(context.TODO(), receiveMessageInput)
-		fmt.Println("data Received", len(data.Messages))
 
 		if err != nil {
 			log.Fatalf("failed to Receive message: %v", err)
@@ -161,8 +160,6 @@ func (s *SQSConfig) DeleteSqsMessage(msgReceipt string) {
 		ReceiptHandle: &msgReceipt,
 	})
 }
-
-
 
 func (a *SMTPAuth) SendEmail(toEmail string, subject string, body string) {
 	m := gomail.NewMessage()

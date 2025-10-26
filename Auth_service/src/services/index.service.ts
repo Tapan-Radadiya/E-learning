@@ -21,6 +21,7 @@ const addUserService = async (userBody: { display_name: string, email: string, p
                 )
             )
         })
+
     if (isUserExist) {
         return ApiResult({ message: "User With Email Or Display_Name Already Exists", statusCode: 409 })
     }
@@ -38,7 +39,7 @@ const addUserService = async (userBody: { display_name: string, email: string, p
                 email: userBody.email,
                 password: await hashText(userBody.password),
                 user_role: userBody.role,
-                is_mfa_enabled: false
+                is_mfa_enabled: false,
             })
             .returning({
                 id: tbl_user.id,
@@ -66,6 +67,7 @@ const addUserService = async (userBody: { display_name: string, email: string, p
 
             const data: any = await triggerUserXpEvent({ xpEvent: "NEW_REGISTER", userId: userCreate.id })
             if (data) {
+                console.log('data-->', data);
                 await pushDataToSQS({
                     to: userBody.email,
                     body: NEW_USER_EMAIL_TEMPLATE(userBody.display_name, data.xp_point as number),
@@ -82,7 +84,6 @@ const addUserService = async (userBody: { display_name: string, email: string, p
         return ApiResult({ message: "Error Creating User Try After SomeTime", statusCode: 409, err: userCreate })
     }
 }
-
 
 const enableMFAService = async (body: { userEmailId: string, password: string, otp: string }): Promise<ApiResultInterface> => {
     const validateLogin = await db
@@ -187,7 +188,6 @@ const loginUserService = async (userLoginBody: { email: string, password: string
     return ApiResult({ message: "User Logged In Successfully", statusCode: 200, data: { accessToken, refreshToken } })
 }
 
-
 const reevaluteRefreshToken = async (refreshToken: string): Promise<ApiResultInterface> => {
     try {
         const isValidJWT = await validateJWT(refreshToken, 'REFRESH')
@@ -266,7 +266,10 @@ const validateValidMFAOtp = (speakeasy_key: string, otp: string): boolean => {
     })
 }
 export {
-    addUserService, enableMFAService, getUserProfileService,
-    getUserProfilesGrpcService, loginUserService,
+    addUserService,
+    enableMFAService,
+    getUserProfileService,
+    getUserProfilesGrpcService,
+    loginUserService,
     reevaluteRefreshToken
 }

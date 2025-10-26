@@ -7,7 +7,7 @@ export const tbl_user = pgTable("tbl_user", {
     password: varchar('password').notNull(),
     user_role: varchar('user_role').notNull().default('USER'),
     is_mfa_enabled: boolean('is_mfa_enabled').notNull().default(false),
-    organization_id: uuid('organization_id').notNull().references(() => tbl_organization.id),
+    organization_id: uuid('organization_id').references(() => tbl_organization.id),
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').$onUpdate(() => new Date())
 })
@@ -53,4 +53,12 @@ export const tbl_roles = pgTable("tbl_roles", {
     created_by: uuid('created_by').notNull().references(() => tbl_user.id),
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').$onUpdate(() => new Date())
+})
+
+export const tbl_user_hierarchy = pgTable('tbl_user_hierarchy', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    parent_role_id: uuid('parent_role_id').references(() => tbl_roles.id),
+    organization_id: uuid('organization_id').references(() => tbl_organization.id),
+    manager_user_id: uuid('manager_user_id').references(() => tbl_user.id),
+    user_id: uuid('user_id').references(() => tbl_user.id)
 })

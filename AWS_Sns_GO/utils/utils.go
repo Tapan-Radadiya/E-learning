@@ -15,10 +15,9 @@ func GetJsonMarshalData(data any) []byte {
 }
 
 func GetJsonUnmarshalData(data string, structData interface{}) {
-	
+
 	err := json.Unmarshal([]byte(data), structData)
 	if err != nil {
 		fmt.Printf("Error unmarshl JSON %v", err)
 	}
-	fmt.Printf("Data After %v\n", structData)
 }

@@ -1,5 +1,5 @@
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs"
-
+import crypto from "crypto"
 import jwt, { JwtPayload } from "jsonwebtoken"
 export interface ApiResultInterface {
     message: string,
@@ -47,22 +47,23 @@ export const decodeJWT = async (jwtToken: string, type: 'ACCESS' | 'REFRESH'): P
 
 
 export const pushDataToSQS = async (sqsData: SQSEmailDataPushInterface) => {
-
-    const sqsClient = new SQSClient({
-        region: process.env.AWS_REGION,
-        credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-            secretAccessKey: process.env.AWS_SECRET_KEY_ID!
-        }
-    })
-
-    const sendMsg = new SendMessageCommand({
-        MessageBody: JSON.stringify(sqsData),
-        QueueUrl: process.env.AWS_SQS_QUERY_URL,
-        MessageGroupId: sqsData.messageGroupId,
-        MessageDeduplicationId: `dedup-${crypto.randomUUID()}`
-    })
-
-    const res = await sqsClient.send(sendMsg)
-    console.log('res.MessageId->', res.MessageId)
+    try {
+        const sqsClient = new SQSClient({
+            region: process.env.AWS_REGION,
+            credentials: {
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+                secretAccessKey: process.env.AWS_SECRET_KEY_ID!
+            }
+        })
+        const sendMsg = new SendMessageCommand({
+            MessageBody: JSON.stringify(sqsData),
+            QueueUrl: process.env.AWS_SQS_QUERY_URL,
+            MessageGroupId: sqsData.messageGroupId,
+            MessageDeduplicationId: `dedup-${crypto.randomUUID()}`
+        })
+        const res = await sqsClient.send(sendMsg)
+        console.log('res.MessageId->', res.MessageId)
+    } catch (error) {
+        console.log('error-->', error);
+    }
 }
