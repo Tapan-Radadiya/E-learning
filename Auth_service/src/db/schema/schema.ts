@@ -7,7 +7,7 @@ export const tbl_user = pgTable("tbl_user", {
     password: varchar('password').notNull(),
     user_role: varchar('user_role').notNull().default('USER'),
     is_mfa_enabled: boolean('is_mfa_enabled').notNull().default(false),
-    organization_id: uuid('organization_id').references(() => tbl_organization.id),
+    organization_id: uuid('organization_id').references(() => tbl_organization.id).notNull(),
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').$onUpdate(() => new Date())
 })

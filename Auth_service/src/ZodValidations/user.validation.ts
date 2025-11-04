@@ -9,7 +9,8 @@ const zodUserCreateValidation = z.object({
 })
 
 const zodOrganizationCreateValidation = z.object({
-    org_name: z.string().min(1)
+    org_name: z.string().min(1),
+    email_id: z.string()
 })
 
 const zodUserLoginValidation = z.object({

@@ -9,8 +9,9 @@ declare global {
                 id: string;
                 email: string;
                 role: Role;
+                org_id: string
             };
         }
     }
 }
-export {};
+export { };

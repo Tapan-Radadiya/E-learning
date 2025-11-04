@@ -34,7 +34,7 @@ export const compareText = async (plainText: string, hashedText: string): Promis
     return hash === hashedText
 }
 
-export const generateAccessToken = async (jwtPayload: { id: string, email: string, role: Role, mfa: boolean }) => {
+export const generateAccessToken = async (jwtPayload: { id: string, email: string, role: Role, mfa: boolean, org_id: string }) => {
     const access_secret: string = process.env.JWT_ACCESS_KEY_SECRET! as string
     const access_secret_TTL = process.env.JWT_ACCESS_KEY_TTL as ms.StringValue
     const signedToken = jwt.sign(jwtPayload, access_secret, {
@@ -93,3 +93,31 @@ export const validateWithZod = (zodSchema: any, value: any): { success: boolean,
 //     const res = await sqsClient.send(sendMsg)
 //     console.log('res.MessageId->', res.MessageId)
 // }
+
+
+
+export function generatePassword(length: number) {
+    const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+    const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const numberChars = "0123456789";
+    const symbolChars = "!@#$%^&*()_+[]{}|;:,.<>?";
+
+    let allowedChars = "";
+    let password = "";
+
+    allowedChars += lowercaseChars;
+    allowedChars += uppercaseChars;
+    allowedChars += numberChars;
+    allowedChars += symbolChars;
+
+    if (length <= 0) {
+        return "Password length must be at least 1.";
+    }
+
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * allowedChars.length);
+        password += allowedChars[randomIndex];
+    }
+
+    return password;
+}

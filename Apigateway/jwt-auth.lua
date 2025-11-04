@@ -43,5 +43,6 @@ end
 ngx.req.set_header("X-user-id", jwt_obj.payload.id)
 ngx.req.set_header("X-user-email", jwt_obj.payload.email)
 ngx.req.set_header("X-user-role", jwt_obj.payload.role)
+ngx.req.set_header("x-user-org-id", jwt_obj.payload.org_id)
 
 return

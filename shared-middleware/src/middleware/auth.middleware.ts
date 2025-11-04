@@ -24,10 +24,11 @@ export const AuthenticateUser = async (req: Request, res: Response, next: NextFu
         const userId = req.header("x-user-id")
         const userEmail = req.header("x-user-email")
         const userRole = req.header("x-user-role")
-        if(userId && userEmail && userRole){
-            req.user = { email:userEmail as string, id:userId as string, role:userRole as Role }
+        const userOrgId = req.header("x-user-org-id")
+        if (userId && userEmail && userRole && userOrgId) {
+            req.user = { email: userEmail as string, id: userId as string, role: userRole as Role, org_id: userOrgId }
             next()
-        }else{
+        } else {
             res.status(401).json({ message: "Unauthorized Invalid Token" });
             return
         }

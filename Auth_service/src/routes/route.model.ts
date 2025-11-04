@@ -5,7 +5,7 @@ import { AuthenticateUser, AuthorizeUser } from 'shared-middleware';
 const router = express.Router()
 
 router.route('/create-org').post(AuthenticateUser, AuthorizeUser(['SUPER_ADMIN']), createOrganization)
-router.route('/add-user').post(createUserController)
+router.route('/add-user').post(AuthenticateUser, AuthorizeUser(['ORG_ADMIN']), createUserController)
 router.route('/login').post(loginUser)
 router.route('/refresh').get(refreshTokenData)
 router.route('/enable-mfa').post(enableMFA)

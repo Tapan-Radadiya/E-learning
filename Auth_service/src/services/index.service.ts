@@ -2,45 +2,77 @@ import qrcode from "qrcode"
 import speakeasy from "speakeasy"
 import { EMAIL_TYPE, Role, SPEAKEASY_CONFIG, SQS_MESSAGE_GROUP_ID } from "../constants"
 import { ApiResultInterface } from "../interfaces/common.interface"
-import { ApiResult, compareText, decodeJWT, generateAccessToken, generateRefreshToken, hashText, validateJWT } from "../utils/comman"
+import { ApiResult, compareText, decodeJWT, generateAccessToken, generatePassword, generateRefreshToken, hashText, validateJWT } from "../utils/comman"
 import { triggerUserXpEvent } from "../GrpcServices/client/grpc.client"
 import { pushDataToSQS } from "shared-middleware/dist/utils/comman"
 import { NEW_USER_EMAIL_TEMPLATE } from "../EmailTemplates/emailTemplates"
 import { db } from "../config/connectDb"
 import { tbl_organization, tbl_user, tbl_user_refresh_tokens } from "../db"
 import { and, eq, inArray } from "drizzle-orm"
+import { AddOrgUserInterface } from "../types/service.types"
 
-const createOrgService = async (body: { org_name: string }): Promise<ApiResultInterface> => {
+const createOrgService = async (body: { org_name: string, email_id: string }): Promise<ApiResultInterface> => {
     const isOrgExists = await db.query.tbl_organization.findFirst({
         where: eq(
             tbl_organization.org_name,
             body.org_name.toLowerCase()
         )
     })
+    if (isOrgExists) {
+        return ApiResult({ message: "Organization with this name already exists", statusCode: 409 })
+    }
+    const isUserAlreadyExists = await db.query.tbl_user.findFirst({
+        where: eq(
+            tbl_user.email,
+            body.email_id
+        )
+    })
+    if (isUserAlreadyExists) {
+        return ApiResult({ message: "User With this email is already assigned to one organization", statusCode: 409 })
+    }
     try {
-        if (isOrgExists) {
-            return ApiResult({ message: "Organization with this name already exists", statusCode: 409 })
-        }
+        const newPassword = generatePassword(15)
+        const orgCreate = await db.transaction(async (tx) => {
+            const newOrg = await tx.insert(tbl_organization).values({
+                org_name: body.org_name.toLowerCase()
+            }).returning({
+                id: tbl_organization.id
+            })
+            const newOrgUser = await tx.insert(tbl_user).values({
+                email: body.email_id,
+                password: await hashText(newPassword),
+                display_name: body.email_id,
+                user_role: Role.ORG_ADMIN,
+                organization_id: newOrg[0].id
+            }).returning({
+                email: tbl_user.email,
+                display_name: tbl_user.display_name,
+            })
 
-        const newOrg = await db.insert(tbl_organization).values({
-            org_name: body.org_name.toLowerCase()
+            if (!newOrg[0] || !newOrgUser[0]) {
+                // Automatically rollback 
+                throw new Error("rollback because newOrg or newOrgUser missing");
+            }
+            return { ...newOrg[0], ...newOrgUser[0], password: newPassword }
         })
 
-        return ApiResult({ message: "New Organization Created", statusCode: 201, data: newOrg })
+        return ApiResult({ message: "New Organization Created with the user cread", statusCode: 201, data: orgCreate })
 
     } catch (error: unknown) {
+        console.log('error-->', error);
         return ApiResult({ message: "Error Creating Organization Try After SomeTime", statusCode: 409, err: error as Error })
     }
 }
 
-const addUserService = async (userBody: { display_name: string, email: string, password: string, role: Role }): Promise<ApiResultInterface> => {
+const addOrgUserService = async (data: AddOrgUserInterface): Promise<ApiResultInterface> => {
+
     const isUserExist = await db.query
         .tbl_user
         .findFirst({
             where: (
                 and(
-                    eq(tbl_user.email, userBody.email),
-                    eq(tbl_user.display_name, userBody.display_name)
+                    eq(tbl_user.email, data.userBody.email),
+                    eq(tbl_user.display_name, data.userBody.display_name)
                 )
             )
         })
@@ -49,7 +81,7 @@ const addUserService = async (userBody: { display_name: string, email: string, p
         return ApiResult({ message: "User With Email Or Display_Name Already Exists", statusCode: 409 })
     }
 
-    const secret = await speakeasy.generateSecret({ ...SPEAKEASY_CONFIG, name: userBody.email })
+    const secret = await speakeasy.generateSecret({ ...SPEAKEASY_CONFIG, name: data.userBody.email })
 
     if (!secret.otpauth_url) {
         return ApiResult({ message: "Error Registering User Try AFter SomeTime", statusCode: 409 })
@@ -58,11 +90,12 @@ const addUserService = async (userBody: { display_name: string, email: string, p
     const userCreate = await db.transaction(async (tx) => {
         const userData = await tx.insert(tbl_user)
             .values({
-                display_name: userBody.display_name,
-                email: userBody.email,
-                password: await hashText(userBody.password),
-                user_role: userBody.role,
+                display_name: data.userBody.display_name,
+                email: data.userBody.email,
+                password: await hashText(data.userBody.password),
+                user_role: data.userBody.role,
                 is_mfa_enabled: false,
+                organization_id: data.userData.org_id
             })
             .returning({
                 id: tbl_user.id,
@@ -81,7 +114,7 @@ const addUserService = async (userBody: { display_name: string, email: string, p
     if (userCreate) {
         const qrCodeUrl = speakeasy.otpauthURL({
             secret: secret.base32,
-            label: `${userBody.email}`,
+            label: `${data.userBody.email}`,
             issuer: "E-Learning",
             encoding: "base32"
         })
@@ -90,10 +123,9 @@ const addUserService = async (userBody: { display_name: string, email: string, p
 
             const data: any = await triggerUserXpEvent({ xpEvent: "NEW_REGISTER", userId: userCreate.id })
             if (data) {
-                console.log('data-->', data);
                 await pushDataToSQS({
-                    to: userBody.email,
-                    body: NEW_USER_EMAIL_TEMPLATE(userBody.display_name, data.xp_point as number),
+                    to: data.userBody.email,
+                    body: NEW_USER_EMAIL_TEMPLATE(data.userBody.display_name, data.xp_point as number),
                     subject: "Welcome Message",
                     emailType: EMAIL_TYPE.USER_CREATION,
                     messageGroupId: SQS_MESSAGE_GROUP_ID.Email_Sending
@@ -153,51 +185,57 @@ const enableMFAService = async (body: { userEmailId: string, password: string, o
     } else {
         return ApiResult({ message: "Invalid MFA Code Or Error Eanbling Multi Factor Authentication Please Try After SomeTime", statusCode: 409 })
     }
-
 }
 
 const loginUserService = async (userLoginBody: { email: string, password: string, otp: string }): Promise<ApiResultInterface> => {
+
+    // TODO here we have to change the flow of MFA before user is not allowed to login if user is not enabled MFA
+    // ToDO so we have to make a new API where user is logged in and then try to enable MFA
 
     const validateLogin = await db.query.tbl_user.findFirst({
         where: (
             eq(tbl_user.email, userLoginBody.email)
         )
     })
-    if (!validateLogin) {
+
+    if (!validateLogin?.id) {
         return ApiResult({ message: "Unable To Found User", statusCode: 404 })
     }
 
-    if (!validateLogin.is_mfa_enabled) {
-        return ApiResult({ message: "Please Enable MFA", statusCode: 404 })
-    }
+    // if (!validateLogin.is_mfa_enabled) {
+    //     return ApiResult({ message: "Please Enable MFA", statusCode: 404 })
+    // }
 
     if (await !compareText(userLoginBody.password, validateLogin.password)) {
         return ApiResult({ message: "Invalid credentials", statusCode: 403 })
     }
-    const userTokenData = await db
-        .query
-        .tbl_user_refresh_tokens
-        .findFirst({
-            where: (
-                eq(tbl_user_refresh_tokens.user_id, validateLogin.id)
-            )
-        })
-    if (!userTokenData) {
-        return ApiResult({ message: "Unable To Found User", statusCode: 404 })
-    }
 
-    const mfaVarification = validateValidMFAOtp(userTokenData.speakeasy_key!, userLoginBody.otp)
+    // const userTokenData = await db
+    //     .query
+    //     .tbl_user_refresh_tokens
+    //     .findFirst({
+    //         where: (
+    //             eq(tbl_user_refresh_tokens.user_id, validateLogin.id)
+    //         )
+    //     })
+    // if (!userTokenData) {
+    //     return ApiResult({ message: "Unable To Found User", statusCode: 404 })
+    // }
 
-    if (!mfaVarification) {
-        return ApiResult({ message: "Invalid MFA Code", statusCode: 403 })
-    }
+    // const mfaVarification = validateValidMFAOtp(userTokenData.speakeasy_key!, userLoginBody.otp)
+
+    // if (!mfaVarification) {
+    //     return ApiResult({ message: "Invalid MFA Code", statusCode: 403 })
+    // }
 
     const accessToken = await generateAccessToken({
         id: validateLogin.id,
         email: validateLogin.email,
         role: validateLogin.user_role as Role,
-        mfa: true
+        mfa: true,
+        org_id: validateLogin.organization_id
     })
+
     const refreshToken = await generateRefreshToken({ email: validateLogin.email })
 
     await db
@@ -234,7 +272,7 @@ const reevaluteRefreshToken = async (refreshToken: string): Promise<ApiResultInt
                 })
 
                 if (userRefreshTokensData) {
-                    const newAccessToken = await generateAccessToken({ email: userDetails.email, id: userDetails.id, role: userDetails.user_role as Role, mfa: userDetails.is_mfa_enabled })
+                    const newAccessToken = await generateAccessToken({ email: userDetails.email, id: userDetails.id, role: userDetails.user_role as Role, mfa: userDetails.is_mfa_enabled, org_id: userDetails.organization_id })
                     return ApiResult({ message: "New Access Token Generated", statusCode: 200, data: { accessToken: newAccessToken } })
                 }
             }
@@ -289,7 +327,7 @@ const validateValidMFAOtp = (speakeasy_key: string, otp: string): boolean => {
     })
 }
 export {
-    addUserService,
+    addOrgUserService,
     enableMFAService,
     getUserProfileService,
     getUserProfilesGrpcService,

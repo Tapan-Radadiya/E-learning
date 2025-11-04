@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import {
-    addUserService,
+    addOrgUserService,
     enableMFAService,
     getUserProfileService,
     loginUserService,
@@ -49,7 +49,8 @@ const createUserController = async (req: Request, res: Response) => {
         res.status(400).json(ApiResult({ message: "Invalid Data", data: isValidData }))
     }
     try {
-        const data = await addUserService(req.body)
+
+        const data = await addOrgUserService(req.body)
         if (data.statusCode === 201) {
             res.status(201).json(ApiResult({ message: "User Created Successfully", data }))
             return

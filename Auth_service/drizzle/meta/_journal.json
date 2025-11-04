@@ -43,6 +43,13 @@
       "when": 1761479936140,
       "tag": "0005_easy_enchantress",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1762280730952,
+      "tag": "0006_wandering_absorbing_man",
+      "breakpoints": true
     }
   ]
 }
