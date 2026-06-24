@@ -158,6 +158,9 @@ The platform uses PostgreSQL with the following main tables:
 - Quizzes & Attempts (Quiz Service)
 - XP Events & Leaderboards (Progression Service)
 
+## System Flow
+- https://app.eraser.io/workspace/JOmlYeV87uMZsEGEL6li?origin=share
+
 ## Contributing
 
 1. Fork the repository
